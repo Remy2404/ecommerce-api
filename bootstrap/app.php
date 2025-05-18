@@ -18,6 +18,7 @@ return Application::configure(basePath: dirname(__DIR__))
         // Ensure session middleware is applied to API routes for Sanctum
         $middleware->alias([
             'auth.sanctum' => \Laravel\Sanctum\Http\Middleware\EnsureFrontendRequestsAreStateful::class,
+            'admin' => \App\Http\Middleware\AdminMiddleware::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {

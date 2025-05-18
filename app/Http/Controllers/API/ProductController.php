@@ -10,6 +10,9 @@ use App\Http\Requests\ProductStoreRequest;
 use App\Http\Requests\ProductUpdateRequest;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Database\QueryException;
 
 class ProductController extends Controller
 {
@@ -79,25 +82,79 @@ class ProductController extends Controller
      */
     public function store(ProductStoreRequest $request)
     {
-        $validated = $request->validated();
+        try {
+            DB::beginTransaction();
+            
+            $validated = $request->validated();
+            Log::info('Validated data for product creation:', $validated);
 
-        // Generate slug from name
-        $validated['slug'] = Str::slug($request->name);
-        
-        // Check if slug already exists and make it unique if needed
-        $slug = $validated['slug'];
-        $count = 0;
-        while (Product::where('slug', $validated['slug'])->exists()) {
-            $count++;
-            $validated['slug'] = $slug . '-' . $count;
+            // Generate slug from name
+            $validated['slug'] = Str::slug($request->name);
+            
+            // Check if slug already exists and make it unique if needed
+            $originalSlug = $validated['slug'];
+            $count = 0;
+            $currentSlugToCheck = $validated['slug']; 
+            while (Product::where('slug', $currentSlugToCheck)->exists()) {
+                $count++;
+                $currentSlugToCheck = $originalSlug . '-' . $count;
+            }
+            $validated['slug'] = $currentSlugToCheck;
+
+            Log::info('Data before Product::create():', $validated);
+
+            // Check if category exists if category_id is provided
+            if (isset($validated['category_id'])) {
+                $categoryExists = \App\Models\Category::where('id', $validated['category_id'])->exists();
+                if (!$categoryExists) {
+                    Log::warning('Category does not exist: ' . $validated['category_id']);
+                    return response()->json([
+                        'message' => 'The selected category does not exist',
+                        'errors' => ['category_id' => ['The selected category does not exist.']]
+                    ], 422);
+                }
+            }
+
+            $product = Product::create($validated);
+
+            Log::info('Product after Product::create():', $product ? $product->toArray() : ['Product creation failed or returned null']);
+            
+            if (!$product || !$product->exists) {
+                DB::rollBack();
+                Log::error('Product creation failed. Product does not exist after create call.', ['validated_input' => $validated]);
+                return response()->json([
+                    'message' => 'Product creation failed. Could not save to database.',
+                ], 500);
+            }
+
+            DB::commit();
+            Log::info('Product created successfully with ID: ' . $product->id);
+            return response()->json([
+                'message' => 'Product created successfully',
+                'product' => new ProductResource($product),
+            ], 201);
+            
+        } catch (QueryException $e) {
+            DB::rollBack();
+            Log::error('Database error while creating product: ' . $e->getMessage(), [
+                'exception' => $e,
+                'sql' => $e->getSql() ?? 'N/A',
+                'bindings' => $e->getBindings() ?? []
+            ]);
+            
+            return response()->json([
+                'message' => 'Database error while creating product',
+                'error' => $e->getMessage()
+            ], 500);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('Error creating product: ' . $e->getMessage(), ['exception' => $e]);
+            
+            return response()->json([
+                'message' => 'Error creating product',
+                'error' => $e->getMessage()
+            ], 500);
         }
-
-        $product = Product::create($validated);
-
-        return response()->json([
-            'message' => 'Product created successfully',
-            'product' => new ProductResource($product),
-        ], 201);
     }
 
     /**
