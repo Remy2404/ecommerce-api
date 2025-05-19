@@ -11,11 +11,17 @@ class ProductCollection extends ResourceCollection
      * Transform the resource collection into an array.
      *
      * @return array<int|string, mixed>
-     */
-    public function toArray(Request $request): array
+     */    public function toArray(Request $request): array
     {
         return [
             'data' => $this->collection,
+            'meta' => [
+                'current_page' => $this->currentPage(),
+                'last_page' => $this->lastPage(),
+                'total' => $this->total(),
+                'per_page' => $this->perPage(),
+                'count' => $this->count(),
+            ],
             'pagination' => [
                 'total' => $this->total(),
                 'count' => $this->count(),

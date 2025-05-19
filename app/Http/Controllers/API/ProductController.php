@@ -15,8 +15,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Database\QueryException;
 
 class ProductController extends Controller
-{
-    /**
+{    /**
      * Display a listing of the products.
      * 
      * @param  \Illuminate\Http\Request  $request
@@ -24,7 +23,8 @@ class ProductController extends Controller
      */
     public function index(Request $request)
     {
-        $query = Product::query();
+        try {
+            $query = Product::query();
 
         // Filter by category
         if ($request->has('category_id')) {
@@ -65,17 +65,22 @@ class ProductController extends Controller
         $allowedSortFields = ['name', 'price', 'created_at'];
         if (in_array($sortField, $allowedSortFields)) {
             $query->orderBy($sortField, $sortDirection === 'asc' ? 'asc' : 'desc');
-        }
-
-        // Paginate results
+        }        // Paginate results
         $perPage = $request->input('per_page', 15);
-        $products = $query->with('category')->paginate($perPage);
+        $products = $query->with(['category', 'images'])->paginate($perPage);
 
-        return response()->json(new ProductCollection($products));
+            return response()->json(new ProductCollection($products));
+        } catch (\Exception $e) {
+            Log::error('Error fetching products: ' . $e->getMessage(), ['exception' => $e]);
+            return response()->json([
+                'message' => 'Error fetching products',
+                'error' => $e->getMessage()
+            ], 500);
+        }
     }
-
-    /**
-     * Store a newly created product in storage.
+    
+        /**
+         * Store a newly created product in storage.
      *
      * @param  \App\Http\Requests\ProductStoreRequest  $request
      * @return \Illuminate\Http\JsonResponse
@@ -84,23 +89,12 @@ class ProductController extends Controller
     {
         try {
             DB::beginTransaction();
-            
-            $validated = $request->validated();
+              $validated = $request->validated();
             Log::info('Validated data for product creation:', $validated);
 
             // Generate slug from name
-            $validated['slug'] = Str::slug($request->name);
+            $validated['slug'] = $this->generateUniqueSlug($request->name);
             
-            // Check if slug already exists and make it unique if needed
-            $originalSlug = $validated['slug'];
-            $count = 0;
-            $currentSlugToCheck = $validated['slug']; 
-            while (Product::where('slug', $currentSlugToCheck)->exists()) {
-                $count++;
-                $currentSlugToCheck = $originalSlug . '-' . $count;
-            }
-            $validated['slug'] = $currentSlugToCheck;
-
             Log::info('Data before Product::create():', $validated);
 
             // Check if category exists if category_id is provided
@@ -132,14 +126,10 @@ class ProductController extends Controller
             return response()->json([
                 'message' => 'Product created successfully',
                 'product' => new ProductResource($product),
-            ], 201);
-            
-        } catch (QueryException $e) {
+            ], 201);        } catch (QueryException $e) {
             DB::rollBack();
             Log::error('Database error while creating product: ' . $e->getMessage(), [
-                'exception' => $e,
-                'sql' => $e->getSql() ?? 'N/A',
-                'bindings' => $e->getBindings() ?? []
+                'exception' => $e
             ]);
             
             return response()->json([
@@ -175,9 +165,7 @@ class ProductController extends Controller
         $product->load('category', 'images');
         
         return response()->json(new ProductResource($product));
-    }
-
-    /**
+    }    /**
      * Update the specified product in storage.
      *
      * @param  \App\Http\Requests\ProductUpdateRequest  $request
@@ -186,32 +174,32 @@ class ProductController extends Controller
      */
     public function update(ProductUpdateRequest $request, Product $product)
     {
-        $validated = $request->validated();
-
-        // Update slug if name is changed
-        if ($request->has('name') && $request->name !== $product->name) {
-            $slug = Str::slug($request->name);
+        try {
+            DB::beginTransaction();
             
-            // Check if slug already exists and make it unique if needed
-            $count = 0;
-            $baseSlug = $slug;
-            while (Product::where('slug', $slug)->where('id', '!=', $product->id)->exists()) {
-                $count++;
-                $slug = $baseSlug . '-' . $count;
+            $validated = $request->validated();            // Update slug if name is changed
+            if ($request->has('name') && $request->name !== $product->name) {
+                $validated['slug'] = $this->generateUniqueSlug($request->name, $product->id);
             }
+
+            $product->update($validated);
             
-            $validated['slug'] = $slug;
+            DB::commit();
+
+            return response()->json([
+                'message' => 'Product updated successfully',
+                'product' => new ProductResource($product),
+            ]);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('Error updating product: ' . $e->getMessage(), ['exception' => $e]);
+            
+            return response()->json([
+                'message' => 'Error updating product',
+                'error' => $e->getMessage()
+            ], 500);
         }
-
-        $product->update($validated);
-
-        return response()->json([
-            'message' => 'Product updated successfully',
-            'product' => new ProductResource($product),
-        ]);
-    }
-
-    /**
+    }    /**
      * Remove the specified product from storage.
      *
      * @param  \App\Models\Product  $product
@@ -219,20 +207,120 @@ class ProductController extends Controller
      */
     public function destroy(Product $product)
     {
-        // Check if product is used in any orders
-        if ($product->orderItems()->exists()) {
-            // Instead of deleting, just mark as inactive
-            $product->update(['is_active' => false]);
+        try {
+            // Check if product is used in any orders
+            if ($product->orderItems()->exists()) {
+                // Instead of deleting, just mark as inactive
+                $product->update(['is_active' => false]);
+                
+                return response()->json([
+                    'message' => 'Product is used in orders and cannot be deleted. It has been marked as inactive.',
+                ]);
+            }
+            
+            $product->delete();
+
+            return response()->json([
+                'message' => 'Product deleted successfully',
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Error deleting product: ' . $e->getMessage(), ['exception' => $e]);
             
             return response()->json([
-                'message' => 'Product is used in orders and cannot be deleted. It has been marked as inactive.',
-            ]);
+                'message' => 'Error deleting product',
+                'error' => $e->getMessage()
+            ], 500);
         }
-        
-        $product->delete();
+    }    /**
+     * Delete multiple products at once.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function bulkDestroy(Request $request)
+    {
+        try {
+            $request->validate([
+                'product_ids' => 'required|array',
+                'product_ids.*' => 'exists:products,id'
+            ]);
 
-        return response()->json([
-            'message' => 'Product deleted successfully',
-        ]);
+            $productIds = $request->product_ids;
+            $results = [];
+            $deletedCount = 0;
+            $inactiveCount = 0;
+
+            DB::beginTransaction();
+
+            // Process each product
+            foreach ($productIds as $id) {
+                $product = Product::find($id);
+                
+                if (!$product) {
+                    $results[$id] = 'not_found';
+                    continue;
+                }
+
+                // Check if product is used in any orders
+                if ($product->orderItems()->exists()) {
+                    // Instead of deleting, just mark as inactive
+                    $product->update(['is_active' => false]);
+                    $results[$id] = 'deactivated';
+                    $inactiveCount++;
+                } else {
+                    // Delete the product
+                    $product->delete();
+                    $results[$id] = 'deleted';
+                    $deletedCount++;
+                }
+            }
+
+            DB::commit();
+
+            return response()->json([
+                'message' => "{$deletedCount} products deleted and {$inactiveCount} products deactivated successfully",
+                'results' => $results
+            ]);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('Error in bulk destroy products: ' . $e->getMessage(), ['exception' => $e]);
+            
+            return response()->json([
+                'message' => 'Error deleting products',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Generate a unique slug for a product.
+     *
+     * @param  string  $name
+     * @param  int|null  $excludeId
+     * @return string
+     */
+    private function generateUniqueSlug(string $name, ?int $excludeId = null): string
+    {
+        $slug = Str::slug($name);
+        $originalSlug = $slug;
+        $count = 0;
+
+        $query = Product::where('slug', $slug);
+        
+        if ($excludeId) {
+            $query->where('id', '!=', $excludeId);
+        }
+
+        while ($query->exists()) {
+            $count++;
+            $slug = $originalSlug . '-' . $count;
+            $query = Product::where('slug', $slug);
+            
+            if ($excludeId) {
+                $query->where('id', '!=', $excludeId);
+            }
+        }
+
+        return $slug;
     }
 }

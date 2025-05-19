@@ -1,0 +1,99 @@
+body {
+    background-color: #f8f9fa;
+}
+
+.hero-section {
+    padding: 100px 0;
+    background: linear-gradient(135deg, #5c6ac4 0%, #4959bd 100%);
+    color: white;
+    text-align: center;
+}
+
+.hero-title {
+    font-size: 3.5rem;
+    font-weight: 700;
+    margin-bottom: 20px;
+}
+
+.hero-subtitle {
+    font-size: 1.5rem;
+    margin-bottom: 40px;
+    opacity: 0.9;
+}
+
+.btn-hero {
+    padding: 12px 30px;
+    font-size: 1.1rem;
+    border-radius: 30px;
+    margin: 0 10px;
+    font-weight: 600;
+}
+
+.btn-light {
+    background-color: white;
+    color: #5c6ac4;
+}
+
+.btn-outline-light {
+    border-width: 2px;
+}
+
+.features-section {
+    padding: 80px 0;
+}
+
+.feature-card {
+    text-align: center;
+    padding: 30px 20px;
+    border-radius: 15px;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+    height: 100%;
+    transition: transform 0.3s ease;
+    background-color: #fff;
+}
+
+.feature-card:hover {
+    transform: translateY(-10px);
+}
+
+.feature-icon {
+    font-size: 2.5rem;
+    color: #5c6ac4;
+    margin-bottom: 20px;
+}
+
+.footer {
+    background-color: #212529;
+    color: white;
+    padding: 40px 0;
+}
+
+.footer a {
+    color: rgba(255, 255, 255, 0.7);
+    text-decoration: none;
+}
+
+.footer a:hover {
+    color: white;
+}
+
+.footer-heading {
+    font-weight: bold;
+    margin-bottom: 20px;
+}
+
+@media (max-width: 767.98px) {
+    .hero-title {
+        font-size: 2.5rem;
+    }
+
+    .hero-subtitle {
+        font-size: 1.2rem;
+    }
+
+    .btn-hero {
+        display: block;
+        width: 100%;
+        margin: 10px auto;
+    }
+}

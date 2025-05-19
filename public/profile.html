@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Profile - Ecommerce API</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="stylesheet" href="css/dashboard.css">
+    <link rel="stylesheet" href="css/profile.css">
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark fixed-top">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="dashboard.html">Ecommerce Dashboard</a>
+            <button class="navbar-toggler" type="button" id="sidebarToggle">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            <span id="userNameDisplay">User</span>
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
+                            <li><a class="dropdown-item" href="profile.html"><i class="bi bi-person"></i> Profile</a></li>
+                            <li><a class="dropdown-item" href="#"><i class="bi bi-gear"></i> Settings</a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item" href="#" id="logoutBtn"><i class="bi bi-box-arrow-right"></i> Logout</a></li>
+                        </ul>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container-fluid">
+        <div class="row">
+            <nav class="col-md-3 col-lg-2 d-md-block sidebar">
+                <div>
+                    <h6 class="sidebar-heading">Main</h6>
+                    <ul class="nav flex-column">
+                        <li class="nav-item">
+                            <a class="nav-link" href="dashboard.html">
+                                <i class="bi bi-house-door"></i> Dashboard
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="products.html">
+                                <i class="bi bi-cart"></i> Products
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="categories.html">
+                                <i class="bi bi-tag"></i> Categories
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="orders.html">
+                                <i class="bi bi-bag"></i> Orders
+                            </a>
+                        </li>
+                    </ul>
+
+                    <h6 class="sidebar-heading mt-4">Account</h6>
+                    <ul class="nav flex-column">
+                        <li class="nav-item">
+                            <a class="nav-link active" href="profile.html">
+                                <i class="bi bi-person"></i> Profile
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="#" id="sidebarLogoutBtn">
+                                <i class="bi bi-box-arrow-right"></i> Logout
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+            </nav>
+
+            <main role="main" class="col-md-9 ml-sm-auto col-lg-10">
+                <div class="alert alert-success" id="successAlert" role="alert"></div>
+                <div class="alert alert-danger" id="errorAlert" role="alert"></div>
+
+                <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+                    <h1 class="h2">Your Profile</h1>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-4 mb-4">
+                        <div class="card profile-card">
+                            <div class="card-body text-center">
+                                <div class="profile-avatar">
+                                    <i class="bi bi-person-circle"></i>
+                                </div>
+                                <h3 class="mt-3" id="profileName">User Name</h3>
+                                <p class="text-muted" id="profileEmail">user@example.com</p>
+                                <p><span class="badge bg-success" id="profileStatus">Active</span></p>
+                                <p class="text-muted">Member since <span id="profileDate">January 1, 2023</span></p>
+                                <button class="btn btn-sm btn-primary" id="changePasswordBtn">
+                                    <i class="bi bi-lock"></i> Change Password
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-8">
+                        <div class="card">
+                            <div class="card-header">
+                                <ul class="nav nav-tabs card-header-tabs" id="profileTabs" role="tablist">
+                                    <li class="nav-item" role="presentation">
+                                        <button class="nav-link active" id="personal-tab" data-bs-toggle="tab" data-bs-target="#personal" type="button" role="tab" aria-controls="personal" aria-selected="true">Personal Info</button>
+                                    </li>
+                                    <li class="nav-item" role="presentation">
+                                        <button class="nav-link" id="shipping-tab" data-bs-toggle="tab" data-bs-target="#shipping" type="button" role="tab" aria-controls="shipping" aria-selected="false">Shipping Address</button>
+                                    </li>
+                                    <li class="nav-item" role="presentation">
+                                        <button class="nav-link" id="billing-tab" data-bs-toggle="tab" data-bs-target="#billing" type="button" role="tab" aria-controls="billing" aria-selected="false">Billing Address</button>
+                                    </li>
+                                </ul>
+                            </div>
+                            <div class="card-body">
+                                <div class="tab-content" id="profileTabsContent">
+                                    <!-- Personal Information Tab -->
+                                    <div class="tab-pane fade show active" id="personal" role="tabpanel" aria-labelledby="personal-tab">
+                                        <form id="personalInfoForm">
+                                            <div class="row mb-3">
+                                                <div class="col-md-6">
+                                                    <label for="userName" class="form-label">Full Name</label>
+                                                    <input type="text" class="form-control" id="userName" required>
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <label for="userEmail" class="form-label">Email</label>
+                                                    <input type="email" class="form-control" id="userEmail" readonly>
+                                                    <small class="text-muted">Email cannot be changed.</small>
+                                                </div>
+                                            </div>
+                                            <div class="row mb-3">
+                                                <div class="col-md-6">
+                                                    <label for="userPhone" class="form-label">Phone Number</label>
+                                                    <input type="tel" class="form-control" id="userPhone">
+                                                </div>
+                                            </div>
+                                            <button type="submit" class="btn btn-primary" id="savePersonalInfo">
+                                                Save Changes
+                                            </button>
+                                        </form>
+                                    </div>
+                                    
+                                    <!-- Shipping Address Tab -->
+                                    <div class="tab-pane fade" id="shipping" role="tabpanel" aria-labelledby="shipping-tab">
+                                        <form id="shippingAddressForm">
+                                            <div class="mb-3">
+                                                <label for="shippingAddressLine1" class="form-label">Address Line 1</label>
+                                                <input type="text" class="form-control" id="shippingAddressLine1">
+                                            </div>
+                                            <div class="mb-3">
+                                                <label for="shippingAddressLine2" class="form-label">Address Line 2</label>
+                                                <input type="text" class="form-control" id="shippingAddressLine2">
+                                            </div>
+                                            <div class="row mb-3">
+                                                <div class="col-md-6">
+                                                    <label for="shippingCity" class="form-label">City</label>
+                                                    <input type="text" class="form-control" id="shippingCity">
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <label for="shippingPostalCode" class="form-label">Postal Code</label>
+                                                    <input type="text" class="form-control" id="shippingPostalCode">
+                                                </div>
+                                            </div>
+                                            <div class="mb-3">
+                                                <label for="shippingCountry" class="form-label">Country</label>
+                                                <select class="form-select" id="shippingCountry">
+                                                    <option value="">Select Country</option>
+                                                    <option value="US">United States</option>
+                                                    <option value="CA">Canada</option>
+                                                    <option value="UK">United Kingdom</option>
+                                                    <option value="AU">Australia</option>
+                                                    <!-- More countries will be added dynamically -->
+                                                </select>
+                                            </div>
+                                            <div class="mb-3 form-check">
+                                                <input type="checkbox" class="form-check-input" id="sameAsBilling">
+                                                <label class="form-check-label" for="sameAsBilling">Use as billing address</label>
+                                            </div>
+                                            <button type="submit" class="btn btn-primary" id="saveShippingAddress">
+                                                Save Address
+                                            </button>
+                                        </form>
+                                    </div>
+                                    
+                                    <!-- Billing Address Tab -->
+                                    <div class="tab-pane fade" id="billing" role="tabpanel" aria-labelledby="billing-tab">
+                                        <form id="billingAddressForm">
+                                            <div class="mb-3">
+                                                <label for="billingAddressLine1" class="form-label">Address Line 1</label>
+                                                <input type="text" class="form-control" id="billingAddressLine1">
+                                            </div>
+                                            <div class="mb-3">
+                                                <label for="billingAddressLine2" class="form-label">Address Line 2</label>
+                                                <input type="text" class="form-control" id="billingAddressLine2">
+                                            </div>
+                                            <div class="row mb-3">
+                                                <div class="col-md-6">
+                                                    <label for="billingCity" class="form-label">City</label>
+                                                    <input type="text" class="form-control" id="billingCity">
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <label for="billingPostalCode" class="form-label">Postal Code</label>
+                                                    <input type="text" class="form-control" id="billingPostalCode">
+                                                </div>
+                                            </div>
+                                            <div class="mb-3">
+                                                <label for="billingCountry" class="form-label">Country</label>
+                                                <select class="form-select" id="billingCountry">
+                                                    <option value="">Select Country</option>
+                                                    <option value="US">United States</option>
+                                                    <option value="CA">Canada</option>
+                                                    <option value="UK">United Kingdom</option>
+                                                    <option value="AU">Australia</option>
+                                                    <!-- More countries will be added dynamically -->
+                                                </select>
+                                            </div>
+                                            <button type="submit" class="btn btn-primary" id="saveBillingAddress">
+                                                Save Address
+                                            </button>
+                                        </form>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="row mt-4">
+                    <div class="col-md-12">
+                        <div class="card">
+                            <div class="card-header">
+                                <h5>Recent Orders</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="table-responsive">
+                                    <table class="table table-striped">
+                                        <thead>
+                                            <tr>
+                                                <th>Order ID</th>
+                                                <th>Date</th>
+                                                <th>Total</th>
+                                                <th>Status</th>
+                                                <th>Action</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="recentOrdersBody">
+                                            <!-- Recent orders will be populated dynamically -->
+                                            <tr>
+                                                <td colspan="5" class="text-center">Loading recent orders...</td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                                <a href="orders.html" class="btn btn-outline-primary">View All Orders</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <!-- Change Password Modal -->
+    <div class="modal fade" id="changePasswordModal" tabindex="-1" aria-labelledby="changePasswordModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="changePasswordModalLabel">Change Password</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="changePasswordForm">
+                        <div class="mb-3">
+                            <label for="currentPassword" class="form-label">Current Password</label>
+                            <input type="password" class="form-control" id="currentPassword" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="newPassword" class="form-label">New Password</label>
+                            <input type="password" class="form-control" id="newPassword" required>
+                            <div class="form-text">Password must be at least 8 characters and include at least one uppercase letter, one lowercase letter, and one number.</div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="confirmPassword" class="form-label">Confirm New Password</label>
+                            <input type="password" class="form-control" id="confirmPassword" required>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary" id="savePasswordBtn">Change Password</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="js/profile.js"></script>
+</body>
+</html>

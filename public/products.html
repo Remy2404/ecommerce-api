@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Products - Ecommerce API</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="stylesheet" href="css/dashboard.css">
+    <link rel="stylesheet" href="css/products.css">
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark fixed-top">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="dashboard.html">Ecommerce Dashboard</a>
+            <button class="navbar-toggler" type="button" id="sidebarToggle">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            <span id="userNameDisplay">User</span>
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
+                            <li><a class="dropdown-item" href="profile.html"><i class="bi bi-person"></i> Profile</a></li>
+                            <li><a class="dropdown-item" href="#"><i class="bi bi-gear"></i> Settings</a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item" href="#" id="logoutBtn"><i class="bi bi-box-arrow-right"></i> Logout</a></li>
+                        </ul>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container-fluid">
+        <div class="row">
+            <nav class="col-md-3 col-lg-2 d-md-block sidebar">
+                <div>
+                    <h6 class="sidebar-heading">Main</h6>
+                    <ul class="nav flex-column">
+                        <li class="nav-item">
+                            <a class="nav-link" href="dashboard.html">
+                                <i class="bi bi-house-door"></i> Dashboard
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link active" href="products.html">
+                                <i class="bi bi-cart"></i> Products
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="categories.html">
+                                <i class="bi bi-tag"></i> Categories
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="orders.html">
+                                <i class="bi bi-bag"></i> Orders
+                            </a>
+                        </li>
+                    </ul>
+
+                    <h6 class="sidebar-heading mt-4">Account</h6>
+                    <ul class="nav flex-column">
+                        <li class="nav-item">
+                            <a class="nav-link" href="profile.html">
+                                <i class="bi bi-person"></i> Profile
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="#" id="sidebarLogoutBtn">
+                                <i class="bi bi-box-arrow-right"></i> Logout
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+            </nav>
+
+            <main role="main" class="col-md-9 ml-sm-auto col-lg-10">
+                <div class="alert alert-success" id="successAlert" role="alert"></div>
+                <div class="alert alert-danger" id="errorAlert" role="alert"></div>
+
+                <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+                    <h1 class="h2">Products</h1>
+                    <div class="btn-toolbar mb-2 mb-md-0">
+                        <button type="button" class="btn btn-sm btn-primary" id="addProductBtn">
+                            <i class="bi bi-plus"></i> Add New Product
+                        </button>
+                    </div>
+                </div>
+
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <div class="input-group">
+                            <input type="text" class="form-control" placeholder="Search products..." id="searchProducts">
+                            <button class="btn btn-outline-secondary" type="button" id="searchButton">
+                                <i class="bi bi-search"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <select class="form-select" id="categoryFilter">
+                            <option value="">All Categories</option>
+                            <!-- Categories will be populated dynamically -->
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <select class="form-select" id="sortProducts">
+                            <option value="name_asc">Name (A-Z)</option>
+                            <option value="name_desc">Name (Z-A)</option>
+                            <option value="price_asc">Price (Low to High)</option>
+                            <option value="price_desc">Price (High to Low)</option>
+                            <option value="newest">Newest First</option>
+                            <option value="oldest">Oldest First</option>
+                        </select>
+                    </div>
+                </div>                <div class="table-responsive products-table">
+                    <div class="mb-3">
+                        <button id="bulkActionBtn" class="btn btn-danger" disabled>
+                            <i class="bi bi-trash"></i> Delete Selected
+                        </button>
+                    </div>
+                    <table class="table table-striped table-hover">
+                        <thead>
+                            <tr>
+                                <th>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="selectAllProducts">
+                                    </div>
+                                </th>
+                                <th>Image</th>
+                                <th>Name</th>
+                                <th>Category</th>
+                                <th>Price</th>
+                                <th>Stock</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="productsTableBody">
+                            <!-- Product items will be populated dynamically -->
+                            <tr>
+                                <td colspan="8" class="text-center">Loading products...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    <div id="pagination" class="d-flex justify-content-center mt-4">
+                        <!-- Pagination will be populated dynamically -->
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <!-- Product Modal -->
+    <div class="modal fade" id="productModal" tabindex="-1" aria-labelledby="productModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="productModalLabel">Add New Product</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="productForm">
+                        <input type="hidden" id="productId">
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label for="productName" class="form-label">Product Name</label>
+                                <input type="text" class="form-control" id="productName" required>
+                                <div class="invalid-feedback">Please provide a product name.</div>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="productCategory" class="form-label">Category</label>
+                                <select class="form-select" id="productCategory" required>
+                                    <option value="">Select Category</option>
+                                    <!-- Categories will be populated dynamically -->
+                                </select>
+                                <div class="invalid-feedback">Please select a category.</div>
+                            </div>
+                        </div>
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label for="productPrice" class="form-label">Price</label>
+                                <div class="input-group">
+                                    <span class="input-group-text">$</span>
+                                    <input type="number" class="form-control" id="productPrice" step="0.01" min="0" required>
+                                    <div class="invalid-feedback">Please provide a valid price.</div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="productStock" class="form-label">Stock Quantity</label>
+                                <input type="number" class="form-control" id="productStock" min="0" required>
+                                <div class="invalid-feedback">Please provide a valid stock quantity.</div>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="productDescription" class="form-label">Description</label>
+                            <textarea class="form-control" id="productDescription" rows="3"></textarea>
+                        </div>
+                        <div class="mb-3">
+                            <label for="productImage" class="form-label">Image URL</label>
+                            <input type="text" class="form-control" id="productImage">
+                            <small class="text-muted">Enter a URL or upload an image</small>
+                        </div>
+                        <div class="mb-3">
+                            <label for="productImageUpload" class="form-label">Or Upload Image</label>
+                            <input type="file" class="form-control" id="productImageUpload" accept="image/*">
+                        </div>                        <div class="mb-3 form-check">
+                            <input type="checkbox" class="form-check-input" id="productActive" checked>
+                            <label class="form-check-label" for="productActive">Active</label>
+                        </div>
+                    </form>
+                    
+                    <!-- Image Management Section - Only visible when editing a product -->
+                    <div id="imageManagementSection" class="mt-4 pt-4 border-top">
+                        <h5><i class="bi bi-images"></i> Product Images</h5>
+                        <p class="text-muted">Manage multiple images for this product. Set one as the primary image to be displayed in product listings.</p>
+                        
+                        <div id="productImages" class="mb-4">
+                            <!-- Images will be loaded here -->
+                            <div class="text-center py-4">
+                                <div class="spinner-border text-primary" role="status">
+                                    <span class="visually-hidden">Loading...</span>
+                                </div>
+                            </div>
+                        </div>
+                          <form id="imageForm" class="row g-3 mb-4">
+                            <div class="col-md-6">
+                                <label for="imageUrl" class="form-label">Image URL</label>
+                                <input type="url" class="form-control" id="imageUrl" required>
+                                <div class="invalid-feedback">Please provide a valid image URL.</div>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="imageAltText" class="form-label">Alt Text</label>
+                                <input type="text" class="form-control" id="imageAltText" placeholder="Describe the image">
+                            </div>
+                            <div class="col-12">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="isPrimaryImage">
+                                    <label class="form-check-label" for="isPrimaryImage">
+                                        Set as primary product image
+                                    </label>
+                                </div>
+                            </div>
+                            <div class="col-12">
+                                <button type="button" class="btn btn-success" id="addImageBtn">
+                                    <i class="bi bi-plus-circle"></i> Add Image from URL
+                                </button>
+                            </div>
+                        </form>
+                        
+                        <h6 class="mt-4 mb-3">Or Upload an Image</h6>
+                        <form id="imageUploadForm" class="row g-3">
+                            <div class="col-md-6">
+                                <label for="imageFile" class="form-label">Image File</label>
+                                <input type="file" class="form-control" id="imageFile" accept="image/*" required>
+                                <div class="invalid-feedback">Please select an image file.</div>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="uploadImageAltText" class="form-label">Alt Text</label>
+                                <input type="text" class="form-control" id="uploadImageAltText" placeholder="Describe the image">
+                            </div>
+                            <div class="col-12">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="isUploadPrimaryImage">
+                                    <label class="form-check-label" for="isUploadPrimaryImage">
+                                        Set as primary product image
+                                    </label>
+                                </div>
+                            </div>
+                            <div class="col-12">
+                                <button type="button" class="btn btn-primary" id="uploadImageBtn">
+                                    <i class="bi bi-cloud-upload"></i> Upload Image
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary" id="saveProductBtn">Save Product</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Delete Confirmation Modal -->
+    <div class="modal fade" id="deleteConfirmModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Confirm Delete</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <p>Are you sure you want to delete this product? This action cannot be undone.</p>
+                    <input type="hidden" id="deleteProductId">
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-danger" id="confirmDeleteBtn">Delete</button>
+                </div>
+            </div>
+        </div>    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="js/products.js"></script>
+    <script src="js/product-images.js"></script>
+</body>
+</html>

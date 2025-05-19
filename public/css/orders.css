@@ -1,0 +1,154 @@
+/* Orders page specific styles */
+.orders-table {
+    background-color: #fff;
+    border-radius: 10px;
+    padding: 15px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.orders-table .table {
+    margin-bottom: 0;
+}
+
+.orders-table th {
+    font-weight: 600;
+    color: #333;
+    background-color: #f8f9fa;
+}
+
+.order-status {
+    font-size: 0.8rem;
+    padding: 0.25rem 0.5rem;
+}
+
+.status-pending {
+    background-color: #ffc107;
+    color: #212529;
+}
+
+.status-paid {
+    background-color: #17a2b8;
+    color: white;
+}
+
+.status-processing {
+    background-color: #6c757d;
+    color: white;
+}
+
+.status-shipped {
+    background-color: #007bff;
+    color: white;
+}
+
+.status-delivered {
+    background-color: #28a745;
+    color: white;
+}
+
+.status-cancelled {
+    background-color: #dc3545;
+    color: white;
+}
+
+.order-actions {
+    display: flex;
+    gap: 5px;
+}
+
+.order-actions .btn {
+    padding: 0.25rem 0.5rem;
+    font-size: 0.8rem;
+}
+
+/* Order detail modal */
+.order-details-container {
+    padding: 10px;
+}
+
+.order-details-container h6 {
+    font-weight: 600;
+    margin-bottom: 0.75rem;
+    color: #333;
+}
+
+.order-details-container p {
+    margin-bottom: 0.5rem;
+}
+
+.update-status-container {
+    background-color: #f8f9fa;
+    padding: 15px;
+    border-radius: 5px;
+    margin: 15px 0;
+}
+
+#orderItemsBody tr {
+    border-bottom: 1px solid #f0f0f0;
+}
+
+#orderItemsBody tr:last-child {
+    border-bottom: none;
+}
+
+.order-item-image {
+    width: 40px;
+    height: 40px;
+    object-fit: cover;
+    border-radius: 5px;
+    margin-right: 10px;
+}
+
+.order-item-name {
+    font-weight: 500;
+}
+
+/* Custom daterange filter */
+#dateRangeContainer {
+    background-color: #f8f9fa;
+    padding: 15px;
+    border-radius: 5px;
+    margin-bottom: 20px;
+}
+
+/* Responsive adjustments */
+@media (max-width: 767.98px) {
+    .order-actions {
+        flex-direction: column;
+    }
+    
+    .orders-table {
+        padding: 10px;
+    }
+    
+    .order-item-image {
+        width: 30px;
+        height: 30px;
+    }
+}
+
+/* Print styles for order details */
+@media print {
+    body * {
+        visibility: hidden;
+    }
+    
+    .modal-content, .modal-content * {
+        visibility: visible;
+    }
+    
+    .modal-content {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 100%;
+    }
+    
+    .modal-header, .modal-footer, .update-status-container {
+        display: none;
+    }
+    
+    .order-details-container {
+        padding: 0;
+    }
+}
