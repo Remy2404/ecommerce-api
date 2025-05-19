@@ -7,6 +7,7 @@ use App\Models\Product;
 use App\Models\ProductImage;
 use App\Traits\ApiResponseTrait;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
 
@@ -129,12 +130,21 @@ class ProductImageController extends Controller
             );
         }
 
-        $image->delete();
+        try {
+            $image->delete();
 
-        return $this->successResponse(
-            null,
-            'Product image deleted successfully'
-        );
+            return response()->json([
+                'message' => 'Image deleted successfully',
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error('Error deleting product image: ' . $e->getMessage(), ['exception' => $e]);
+
+            return response()->json([
+                'message' => 'Error deleting product image',
+                'error'   => $e->getMessage(),
+            ], 500);
+        }
     }
 
     /**

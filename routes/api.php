@@ -55,6 +55,8 @@ Route::middleware('auth:sanctum')->group(function () {
     // Auth
     Route::post('/logout', [AuthController::class, 'logout']);
     Route::get('/user', [AuthController::class, 'user']);
+    // Category summary
+    Route::get('/categories/summary', [CategoryController::class, 'summary']);
     
     // Cart routes
     Route::get('/cart', [CartController::class, 'show']);
@@ -63,35 +65,36 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::delete('/cart', [CartController::class, 'clear']);
     
     // Admin routes
-    Route::middleware('admin')->group(function () {        // Products admin routes        Route::post('/products', [ProductController::class, 'store']);
+    Route::middleware('admin')->group(function () {
+        // Products admin routes
+        Route::post('/products', [ProductController::class, 'store']);
         Route::put('/products/{product}', [ProductController::class, 'update']);
         Route::delete('/products/{product}', [ProductController::class, 'destroy']);
         Route::post('/products/bulk-delete', [ProductController::class, 'bulkDestroy']);
-          // Product images routes
+        // Product images routes
         Route::get('/products/{product}/images', [ProductImageController::class, 'index']);
         Route::post('/products/{product}/images', [ProductImageController::class, 'store']);
         Route::post('/products/{product}/images/upload', [ProductImageController::class, 'upload']);
         Route::put('/products/{product}/images/{image}', [ProductImageController::class, 'update']);
         Route::delete('/products/{product}/images/{image}', [ProductImageController::class, 'destroy']);
-        
         // Product tags routes
         Route::post('/products/{product}/tags', [ProductTagController::class, 'store']);
         Route::put('/products/{product}/tags', [ProductTagController::class, 'update']);
         Route::delete('/products/{product}/tags/{tag}', [ProductTagController::class, 'destroy']);
-          // Categories admin routes
+        // Categories admin routes
         Route::post('/categories', [CategoryController::class, 'store']);
         Route::put('/categories/{category}', [CategoryController::class, 'update']);
         Route::delete('/categories/{category}', [CategoryController::class, 'destroy']);
-        
         // Tags admin routes
         Route::post('/tags', [TagController::class, 'store']);
         Route::put('/tags/{tag}', [TagController::class, 'update']);
         Route::delete('/tags/{tag}', [TagController::class, 'destroy']);
-        
-        // Orders admin routes (admin can see all orders)
+        // Orders admin routes
         Route::get('/orders', [OrderController::class, 'index']);
         Route::get('/orders/{order}', [OrderController::class, 'show']);
         Route::put('/orders/{order}/status', [OrderController::class, 'updateStatus']);
+        // Bulk delete orders
+        Route::post('/orders/bulk-delete', [OrderController::class, 'bulkDestroy']);
     });
     
     // User routes (own orders)

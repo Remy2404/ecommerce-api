@@ -14,14 +14,53 @@ use Illuminate\Support\Str;
 class CategoryController extends Controller
 {
     /**
+     * Return summary statistics for categories.
+     */
+    public function summary(Request $request)
+    {
+        $total = Category::count();
+        $top = Category::withCount('products')
+            ->orderBy('products_count', 'desc')
+            ->first();
+        $recent = Category::orderBy('created_at', 'desc')->first();
+
+        return response()->json([
+            'data' => [
+                'total_categories' => $total,
+                'top_category'     => $top,
+                'recent_category'  => $recent,
+            ],
+        ]);
+    }
+
+    /**
      * Display a listing of the categories.
      *
      * @return \Illuminate\Http\JsonResponse
      */
-    public function index()
+    public function index(Request $request)
     {
-        $categories = Category::with('subcategories')->whereNull('parent_id')->get();
-        
+        $perPage = $request->input('per_page', 15);
+        $query = Category::with('subcategories');
+
+        // Only top-level categories by default
+        $query->whereNull('parent_id');
+
+        // Return all parent categories without pagination for dropdowns
+        if ($request->boolean('parent_only')) {
+            $parents = $query->get();
+            return response()->json([
+                'data' => CategoryResource::collection($parents),
+            ]);
+        }
+
+        // Optionally return only parent categories for dropdown
+        if ($request->boolean('parent_only')) {
+            // already filtered
+        }
+
+        $categories = $query->paginate($perPage);
+
         return response()->json(new CategoryCollection($categories));
     }
 

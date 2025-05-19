@@ -16,6 +16,11 @@ class CategoryCollection extends ResourceCollection
     {
         return [
             'data' => $this->collection,
+            'meta' => [
+                'current_page' => $this->resource->currentPage(),
+                'last_page' => $this->resource->lastPage(),
+                'total' => $this->resource->total(),
+            ],
         ];
     }
 }

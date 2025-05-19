@@ -28,48 +28,59 @@ class OrderController extends Controller
         $user = $request->user();
         
         // Admin sees all orders, with filtering options
-        if ($user->is_admin) {
-            $query = Order::query();
-            
-            // Filter by status
-            if ($request->has('status')) {
-                $query->where('status', $request->status);
-            }
-            
-            // Filter by user
-            if ($request->has('user_id')) {
-                $query->where('user_id', $request->user_id);
-            }
-            
-            // Filter by date range
-            if ($request->has('from_date')) {
-                $query->where('ordered_at', '>=', $request->from_date);
-            }
-            
-            if ($request->has('to_date')) {
-                $query->where('ordered_at', '<=', $request->to_date);
-            }
-            
-            // Sort orders
-            $sortField = $request->input('sort_by', 'ordered_at');
-            $sortDirection = $request->input('sort_direction', 'desc');
-            
-            // Validate sort field
-            $allowedSortFields = ['id', 'ordered_at', 'total_amount', 'status'];
-            if (in_array($sortField, $allowedSortFields)) {
-                $query->orderBy($sortField, $sortDirection === 'asc' ? 'asc' : 'desc');
-            }
-            
-            // Paginate results
-            $perPage = $request->input('per_page', 15);
-            $orders = $query->with(['user', 'items.product'])->paginate($perPage);
-            
-            return response()->json(new OrderCollection($orders));
+        $query = Order::query();
+        
+        // Filter by status
+        if ($request->has('status')) {
+            $query->where('status', $request->status);
         }
-
+        
+        // Filter by user
+        if ($request->has('user_id')) {
+            $query->where('user_id', $request->user_id);
+        }
+        
+        // Filter by date range
+        if ($request->has('from_date')) {
+            $query->where('ordered_at', '>=', $request->from_date);
+        }
+        
+        if ($request->has('to_date')) {
+            $query->where('ordered_at', '<=', $request->to_date);
+        }
+        
+        // Sort orders
+        $sortField = $request->input('sort_by', 'ordered_at');
+        $sortDirection = $request->input('sort_direction', 'desc');
+        
+        // Validate sort field
+        $allowedSortFields = ['id', 'ordered_at', 'total_amount', 'status'];
+        if (in_array($sortField, $allowedSortFields)) {
+            $query->orderBy($sortField, $sortDirection === 'asc' ? 'asc' : 'desc');
+        }
+        
+        // Prepare statistics before pagination
+        $statsQuery = clone $query;
+        $stats = [
+            'total_orders'      => $statsQuery->count(),
+            'total_revenue'     => $statsQuery->sum('total_amount'),
+            'pending_shipment'  => (clone $statsQuery)->where('status', 'pending')->count(),
+            'unique_customers'  => (clone $statsQuery)->distinct('user_id')->count('user_id'),
+        ];
+        
+        // Paginate results
+        $perPage = $request->input('per_page', 15);
+        $orders = $query->with(['user', 'items.product'])->paginate($perPage);
+        
         return response()->json([
-            'message' => 'Access denied. Use /my-orders endpoint to view your orders.',
-        ], 403);
+            'data' => OrderResource::collection($orders),
+            'meta' => [
+                'current_page' => $orders->currentPage(),
+                'last_page'    => $orders->lastPage(),
+                'total'        => $orders->total(),
+                'statistics'   => $stats,
+            ],
+        ]);
     }
 
     /**
@@ -108,11 +119,27 @@ class OrderController extends Controller
             $query->orderBy($sortField, $sortDirection === 'asc' ? 'asc' : 'desc');
         }
         
+        // Prepare statistics before pagination
+        $statsQuery = clone $query;
+        $stats = [
+            'total_orders'      => $statsQuery->count(),
+            'total_revenue'     => $statsQuery->sum('total_amount'),
+            'pending_shipment'  => (clone $statsQuery)->where('status', 'pending')->count(),
+            'unique_customers'  => 1,
+        ];
         // Paginate results
         $perPage = $request->input('per_page', 15);
         $orders = $query->with('items.product')->paginate($perPage);
         
-        return response()->json(new OrderCollection($orders));
+        return response()->json([
+            'data' => OrderResource::collection($orders),
+            'meta' => [
+                'current_page' => $orders->currentPage(),
+                'last_page'    => $orders->lastPage(),
+                'total'        => $orders->total(),
+                'statistics'   => $stats,
+            ],
+        ]);
     }
 
     /**
@@ -246,6 +273,37 @@ class OrderController extends Controller
         return response()->json([
             'message' => 'Order status updated successfully',
             'order' => new OrderResource($order),
+        ]);
+    }
+
+    /**
+     * Bulk delete orders (admin only)
+     *
+     * @param \Illuminate\Http\Request $request
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function bulkDestroy(Request $request)
+    {
+        $request->validate([
+            'ids' => 'required|array',
+            'ids.*' => 'integer|exists:orders,id',
+        ]);
+        $failed = [];
+        DB::beginTransaction();
+        foreach ($request->input('ids') as $id) {
+            try {
+                $order = Order::findOrFail($id);
+                $this->authorize('delete', $order);
+                $order->delete();
+            } catch (\Exception $e) {
+                $failed[] = ['id' => $id, 'error' => $e->getMessage()];
+            }
+        }
+        DB::commit();
+
+        return response()->json([
+            'message' => 'Orders bulk delete completed',
+            'failed' => $failed,
         ]);
     }
 }

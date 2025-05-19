@@ -240,38 +240,35 @@ class ProductController extends Controller
     public function bulkDestroy(Request $request)
     {
         try {
-            $request->validate([
-                'product_ids' => 'required|array',
-                'product_ids.*' => 'exists:products,id'
+            // Validate request data
+            $validated = $request->validate([
+                'product_ids'   => 'required|array',
+                'product_ids.*' => 'exists:products,id',
             ]);
 
-            $productIds = $request->product_ids;
+            $productIds = $validated['product_ids'];
             $results = [];
             $deletedCount = 0;
             $inactiveCount = 0;
 
             DB::beginTransaction();
 
-            // Process each product
             foreach ($productIds as $id) {
-                $product = Product::find($id);
-                
-                if (!$product) {
-                    $results[$id] = 'not_found';
-                    continue;
-                }
+                try {
+                    $product = Product::findOrFail($id);
 
-                // Check if product is used in any orders
-                if ($product->orderItems()->exists()) {
-                    // Instead of deleting, just mark as inactive
-                    $product->update(['is_active' => false]);
-                    $results[$id] = 'deactivated';
-                    $inactiveCount++;
-                } else {
-                    // Delete the product
-                    $product->delete();
-                    $results[$id] = 'deleted';
-                    $deletedCount++;
+                    if ($product->orderItems()->exists()) {
+                        $product->update(['is_active' => false]);
+                        $results[$id] = 'deactivated';
+                        $inactiveCount++;
+                    } else {
+                        $product->delete();
+                        $results[$id] = 'deleted';
+                        $deletedCount++;
+                    }
+                } catch (\Exception $e) {
+                    Log::warning("Failed to process product [{$id}] in bulk delete: {$e->getMessage()}");
+                    $results[$id] = 'error';
                 }
             }
 
@@ -279,15 +276,22 @@ class ProductController extends Controller
 
             return response()->json([
                 'message' => "{$deletedCount} products deleted and {$inactiveCount} products deactivated successfully",
-                'results' => $results
-            ]);
+                'results' => $results,
+            ], 200);
+
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return response()->json([
+                'message' => 'Invalid product IDs',
+                'errors'  => $e->errors(),
+            ], 422);
+
         } catch (\Exception $e) {
             DB::rollBack();
-            Log::error('Error in bulk destroy products: ' . $e->getMessage(), ['exception' => $e]);
-            
+            Log::error('Error in bulk delete products: ' . $e->getMessage(), ['exception' => $e]);
+
             return response()->json([
                 'message' => 'Error deleting products',
-                'error' => $e->getMessage()
+                'error'   => $e->getMessage(),
             ], 500);
         }
     }

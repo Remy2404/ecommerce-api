@@ -7,6 +7,22 @@ document.addEventListener('DOMContentLoaded', function() {
         return;
     }
 
+    // Load authenticated user info
+    const userNameDisplay = document.getElementById('userNameDisplay');
+    let isAdmin = false;
+    fetch('/api/user', { headers: { 'Authorization': `Bearer ${token}` } })
+        .then(res => res.ok ? res.json() : Promise.reject('Failed to fetch user'))
+        .then(resp => {
+            const user = resp.data.user;
+            userNameDisplay.textContent = user.name;
+            isAdmin = user.is_admin;
+            loadOrders();
+        })
+        .catch(err => {
+            console.error(err);
+            loadOrders();
+        });
+
     // DOM elements
     const successAlert = document.getElementById('successAlert');
     const errorAlert = document.getElementById('errorAlert');
@@ -55,18 +71,67 @@ document.addEventListener('DOMContentLoaded', function() {
     let totalOrders = 0;
     let ordersPerPage = 10;
 
+    // Utility to show alerts
+    function showAlert(el, message) {
+        el.textContent = message;
+        el.style.display = 'block';
+        setTimeout(() => { el.style.display = 'none'; }, 5000);
+    }
+
+    // Bulk delete UI elements
+    const selectAllOrders = document.getElementById('selectAllOrders');
+    const deleteSelectedBtn = document.getElementById('deleteSelectedBtn');
+
+    // Select/Deselect all checkboxes
+    selectAllOrders.addEventListener('change', function() {
+        document.querySelectorAll('.order-checkbox').forEach(cb => cb.checked = this.checked);
+    });
+
+    // Bulk delete selected orders
+    deleteSelectedBtn.addEventListener('click', function() {
+        const selectedIds = Array.from(document.querySelectorAll('.order-checkbox:checked')).map(cb => parseInt(cb.value));
+        if (!selectedIds.length) {
+            showAlert(errorAlert, 'Please select at least one order to delete.');
+            return;
+        }
+        if (!confirm('Are you sure you want to delete the selected orders?')) return;
+        fetch('/api/orders/bulk-delete', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json',
+                'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify({ ids: selectedIds })
+        })
+        .then(res => res.ok ? res.json() : Promise.reject('Bulk delete failed'))
+        .then(resp => {
+            if (resp.failed && resp.failed.length) {
+                showAlert(errorAlert, `${resp.failed.length} orders failed to delete.`);
+            } else {
+                showAlert(successAlert, 'Selected orders deleted successfully.');
+            }
+            loadOrders();
+        })
+        .catch(err => {
+            console.error('Bulk delete error:', err);
+            showAlert(errorAlert, 'Error deleting selected orders. Please try again later.');
+        });
+    });
+
     // Function to load orders with filtering, sorting, and pagination
     function loadOrders() {
         // Show loading state
-        ordersTableBody.innerHTML = '<tr><td colspan="6" class="text-center"><div class="loading-spinner"></div> Loading orders...</td></tr>';
+        ordersTableBody.innerHTML = '<tr><td colspan="7" class="text-center"><div class="loading-spinner"></div> Loading orders...</td></tr>';
         
         // Build query parameters
+        // Determine endpoint based on role
+        let endpoint = isAdmin ? `/api/orders?page=${currentPage}` : `/api/my-orders?page=${currentPage}`;
+        
         const searchTerm = searchInput.value.trim();
         const status = statusFilter.value;
         const dateOption = dateFilter.value;
         const sortOption = sortOrders.value;
-        
-        let endpoint = `/api/orders?page=${currentPage}`;
         
         if (searchTerm) {
             endpoint += `&search=${encodeURIComponent(searchTerm)}`;
@@ -77,10 +142,8 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         
         // Add date filtering parameters
-        if (dateOption && dateOption !== 'custom') {
-            endpoint += `&date_filter=${dateOption}`;
-        } else if (dateOption === 'custom' && dateFrom.value && dateTo.value) {
-            endpoint += `&date_from=${dateFrom.value}&date_to=${dateTo.value}`;
+        if (dateOption === 'custom' && dateFrom.value && dateTo.value) {
+            endpoint += `&from_date=${dateFrom.value}&to_date=${dateTo.value}`;
         }
         
         // Add sorting parameters
@@ -119,7 +182,7 @@ document.addEventListener('DOMContentLoaded', function() {
             }
             
             if (data.data.length === 0) {
-                ordersTableBody.innerHTML = '<tr><td colspan="6" class="text-center">No orders found</td></tr>';
+                ordersTableBody.innerHTML = '<tr><td colspan="7" class="text-center">No orders found</td></tr>';
                 paginationContainer.innerHTML = '';
                 return;
             }
@@ -156,6 +219,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 
                 tableContent += `
                 <tr>
+                    <td><input type="checkbox" class="form-check-input order-checkbox" value="${order.id}"></td>
                     <td>#${order.id}</td>
                     <td>${order.user ? order.user.name : 'Unknown'}</td>
                     <td>${formattedDate}</td>
@@ -185,7 +249,7 @@ document.addEventListener('DOMContentLoaded', function() {
         })
         .catch(error => {
             console.error('Error loading orders:', error);
-            ordersTableBody.innerHTML = '<tr><td colspan="6" class="text-center text-danger">Error loading orders. Please try again.</td></tr>';
+            ordersTableBody.innerHTML = '<tr><td colspan="7" class="text-center text-danger">Error loading orders. Please try again.</td></tr>';
             showAlert(errorAlert, 'Failed to load orders. Please try again later.');
         });
     }
@@ -541,45 +605,13 @@ document.addEventListener('DOMContentLoaded', function() {
         window.print();
     }
 
-    // Function to show alert message
-    function showAlert(alertElement, message) {
-        alertElement.textContent = message;
-        alertElement.style.display = 'block';
-        
-        setTimeout(() => {
-            alertElement.style.display = 'none';
-        }, 5000);
-    }
-
     // Function to handle logout
     function handleLogout() {
-        // Show loading message
-        successAlert.textContent = 'Logging out...';
-        successAlert.style.display = 'block';
-        
-        // Send logout request to API
-        fetch('/api/logout', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Accept': 'application/json',
-                'Authorization': `Bearer ${token}`
-            }
-        })
-        .then(response => {
-            // Even if the server responds with an error, we'll log out locally
-            localStorage.removeItem('auth_token');
-            successAlert.textContent = 'Logged out successfully! Redirecting...';
-            setTimeout(() => {
+        fetch('/api/logout', { method: 'POST', headers: { 'Authorization': `Bearer ${token}` } })
+            .finally(() => {
+                localStorage.removeItem('auth_token');
                 window.location.href = 'login.html';
-            }, 1000);
-        })
-        .catch(error => {
-            console.error('Logout error:', error);
-            // Still remove the token and redirect even if the server request fails
-            localStorage.removeItem('auth_token');
-            window.location.href = 'login.html';
-        });
+            });
     }
 
     // Event Listeners
@@ -649,7 +681,4 @@ document.addEventListener('DOMContentLoaded', function() {
         e.preventDefault();
         handleLogout();
     });
-
-    // Initial load
-    loadOrders();
 });

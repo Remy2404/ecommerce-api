@@ -15,6 +15,17 @@ document.addEventListener('DOMContentLoaded', function() {
     const paginationContainer = document.getElementById('pagination');
     const addProductBtn = document.getElementById('addProductBtn');
 
+    // Debug element existence
+    console.log('DOM elements loaded:');
+    console.log('- Add Product Button:', addProductBtn ? 'Found' : 'Not Found');
+    console.log('- Save Product Button:', document.getElementById('saveProductBtn') ? 'Found' : 'Not Found');
+    console.log('- Confirm Delete Button:', document.getElementById('confirmDeleteBtn') ? 'Found' : 'Not Found');
+    console.log('- Select All Checkbox:', document.getElementById('selectAllProducts') ? 'Found' : 'Not Found');
+    console.log('- Bulk Action Button:', document.getElementById('bulkActionBtn') ? 'Found' : 'Not Found');
+
+    // Get user display element
+    const userNameDisplay = document.getElementById('userNameDisplay');
+
     // Modal elements
     const productModal = new bootstrap.Modal(document.getElementById('productModal'));
     const productForm = document.getElementById('productForm');
@@ -26,12 +37,40 @@ document.addEventListener('DOMContentLoaded', function() {
     const productDescription = document.getElementById('productDescription');
     const productImage = document.getElementById('productImage');
     const productActive = document.getElementById('productActive');
-    const saveProductBtn = document.getElementById('saveProductBtn');
-
-    // Delete confirmation modal
-    const deleteConfirmModal = new bootstrap.Modal(document.getElementById('deleteConfirmModal'));
+    const saveProductBtn = document.getElementById('saveProductBtn');    // Delete confirmation modal
+    const modalElement = document.getElementById('deleteConfirmModal');
+    console.log('Delete modal element:', modalElement ? 'Found' : 'Not Found');
+    
+    // Try with error handling in case Bootstrap is not loaded
+    let deleteConfirmModal;
+    try {
+        deleteConfirmModal = new bootstrap.Modal(modalElement);
+        console.log('Delete confirmation modal successfully initialized');
+    } catch (error) {
+        console.error('Error initializing delete confirmation modal:', error);
+        // Fallback approach
+        deleteConfirmModal = {
+            show: function() {
+                console.log('Fallback show modal');
+                modalElement.classList.add('show');
+                modalElement.style.display = 'block';
+                document.body.classList.add('modal-open');
+            },
+            hide: function() {
+                console.log('Fallback hide modal');
+                modalElement.classList.remove('show');
+                modalElement.style.display = 'none';
+                document.body.classList.remove('modal-open');
+            }
+        };
+    }
+    
     const deleteProductId = document.getElementById('deleteProductId');
     const confirmDeleteBtn = document.getElementById('confirmDeleteBtn');
+    
+    // Bulk action elements
+    const selectAllCheckbox = document.getElementById('selectAllProducts');
+    const bulkActionBtn = document.getElementById('bulkActionBtn');
 
     // Pagination state
     let currentPage = 1;
@@ -184,21 +223,27 @@ document.addEventListener('DOMContentLoaded', function() {
             
             // Set up pagination
             renderPagination();
-            
-            // Add event listeners to the new buttons
+              // Add event listeners to the new buttons
             document.querySelectorAll('.edit-product').forEach(button => {
-                button.addEventListener('click', function() {
+                button.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    console.log('Edit product button clicked');
                     const productId = this.getAttribute('data-id');
                     editProduct(productId);
                 });
             });
-            
-            document.querySelectorAll('.delete-product').forEach(button => {
-                button.addEventListener('click', function() {
+              document.querySelectorAll('.delete-product').forEach(button => {
+                button.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    console.log('Delete product button clicked');
                     const productId = this.getAttribute('data-id');
+                    console.log('Delete button clicked for product ID:', productId);
                     confirmDelete(productId);
                 });
             });
+            
+            // Count how many buttons we added listeners to
+            console.log(`Added event listeners to ${document.querySelectorAll('.edit-product').length} edit buttons and ${document.querySelectorAll('.delete-product').length} delete buttons`);
         })        .catch(error => {
             console.error('Error loading products:', error);
             productsTableBody.innerHTML = '<tr><td colspan="8" class="text-center text-danger">Error loading products. Please try again.</td></tr>';
@@ -402,17 +447,39 @@ document.addEventListener('DOMContentLoaded', function() {
             console.error('Error saving product:', error);
             showAlert(errorAlert, `Failed to ${isEditing ? 'update' : 'create'} product: ${error.message}`);
         });
-    }
-
-    // Function to confirm product deletion
+    }    // Function to confirm product deletion
     function confirmDelete(id) {
-        deleteProductId.value = id;
-        deleteConfirmModal.show();
-    }
-
-    // Function to delete a product
+        console.log('Confirming deletion of product with ID:', id);
+        if (deleteProductId) {
+            deleteProductId.value = id;
+            console.log('Set deleteProductId value to:', deleteProductId.value);
+        } else {
+            console.error('deleteProductId element not found');
+        }
+        
+        try {
+            console.log('Attempting to show delete confirmation modal');
+            deleteConfirmModal.show();
+        } catch (error) {
+            console.error('Error showing delete confirmation modal:', error);
+            // Fallback approach
+            const modal = document.getElementById('deleteConfirmModal');
+            if (modal) {
+                modal.classList.add('show');
+                modal.style.display = 'block';
+                document.body.classList.add('modal-open');
+            }
+        }
+    }    // Function to delete a product
     function deleteProduct() {
         const id = deleteProductId.value;
+        console.log('Deleting product with ID:', id);
+        
+        if (!id) {
+            console.error('No product ID to delete');
+            showAlert(errorAlert, 'Error: No product selected for deletion');
+            return;
+        }
         
         fetch(`/api/products/${id}`, {
             method: 'DELETE',
@@ -423,6 +490,7 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         })
         .then(response => {
+            console.log('Delete response status:', response.status);
             if (!response.ok) {
                 return response.json().then(data => {
                     throw new Error(data.message || 'Failed to delete product');
@@ -432,7 +500,19 @@ document.addEventListener('DOMContentLoaded', function() {
         })
         .then(data => {
             // Close modal
-            deleteConfirmModal.hide();
+            console.log('Product deleted successfully, hiding modal');
+            try {
+                deleteConfirmModal.hide();
+            } catch (error) {
+                console.error('Error hiding modal:', error);
+                // Fallback approach
+                const modal = document.getElementById('deleteConfirmModal');
+                if (modal) {
+                    modal.classList.remove('show');
+                    modal.style.display = 'none';
+                    document.body.classList.remove('modal-open');
+                }
+            }
             
             // Show success message
             showAlert(successAlert, 'Product deleted successfully!');
@@ -443,7 +523,11 @@ document.addEventListener('DOMContentLoaded', function() {
         .catch(error => {
             console.error('Error deleting product:', error);
             showAlert(errorAlert, `Failed to delete product: ${error.message}`);
-            deleteConfirmModal.hide();
+            try {
+                deleteConfirmModal.hide();
+            } catch (modalError) {
+                console.error('Error hiding modal after delete error:', modalError);
+            }
         });
     }
 
@@ -474,12 +558,15 @@ document.addEventListener('DOMContentLoaded', function() {
             body: JSON.stringify({ product_ids: productIds })
         })
         .then(response => {
-            if (!response.ok) {
-                return response.json().then(data => {
-                    throw new Error(data.message || 'Failed to delete products');
-                });
-            }
-            return response.json();
+            return response.json().then(data => {
+                if (!response.ok) {
+                    console.error('Bulk delete error response:', data);
+                    const baseMsg = data.message || 'Failed to delete products';
+                    const detail = data.error ? `: ${data.error}` : '';
+                    throw new Error(baseMsg + detail);
+                }
+                return data;
+            });
         })
         .then(data => {
             showAlert(successAlert, data.message);
@@ -527,50 +614,79 @@ document.addEventListener('DOMContentLoaded', function() {
         }, 5000);
     }
 
-    // Function to handle logout
+    // Handle logout function
     function handleLogout() {
-        // Show loading message
-        successAlert.textContent = 'Logging out...';
-        successAlert.style.display = 'block';
-        
-        // Send logout request to API
         fetch('/api/logout', {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Accept': 'application/json',
-                'Authorization': `Bearer ${token}`
-            }
+            headers: { 'Authorization': `Bearer ${token}` }
         })
-        .then(response => {
-            // Even if the server responds with an error, we'll log out locally
-            localStorage.removeItem('auth_token');
-            successAlert.textContent = 'Logged out successfully! Redirecting...';
-            setTimeout(() => {
-                window.location.href = 'login.html';
-            }, 1000);
-        })
-        .catch(error => {
-            console.error('Logout error:', error);
-            // Still remove the token and redirect even if the server request fails
+        .finally(() => {
             localStorage.removeItem('auth_token');
             window.location.href = 'login.html';
         });
-    }    // Event Listeners
-    addProductBtn.addEventListener('click', addProduct);
-    saveProductBtn.addEventListener('click', saveProduct);
-    confirmDeleteBtn.addEventListener('click', deleteProduct);
+    }    // Attach logout handlers
+    document.getElementById('logoutBtn').addEventListener('click', function(e) { e.preventDefault(); handleLogout(); });
+    document.getElementById('sidebarLogoutBtn').addEventListener('click', function(e) { e.preventDefault(); handleLogout(); });
+      // Attach event handlers for product management
+    if (addProductBtn) {
+        console.log('Attaching event listener to Add Product button');
+        addProductBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            console.log('Add Product button clicked');
+            addProduct();
+        });
+    } else {
+        console.error('Add Product button not found');
+    }
     
-    // Bulk actions
-    document.getElementById('selectAllProducts').addEventListener('change', toggleSelectAllProducts);
-    document.getElementById('bulkActionBtn').addEventListener('click', bulkDeleteProducts);
+    // Make sure we directly access the confirm delete button by its ID
+    const directConfirmDeleteBtn = document.getElementById('confirmDeleteBtn');
+    console.log('Direct access to Confirm Delete Button:', directConfirmDeleteBtn ? 'Found' : 'Not Found');
     
-    // Event delegation for product checkboxes
-    productsTableBody.addEventListener('change', function(e) {
-        if (e.target.classList.contains('product-checkbox')) {
-            updateBulkActionButton();
-        }
-    });
+    if (directConfirmDeleteBtn) {
+        console.log('Attaching event listener to Confirm Delete button (direct access)');
+        directConfirmDeleteBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            console.log('Confirm Delete button clicked (direct access)');
+            deleteProduct();
+        });
+    } 
+    
+    if (confirmDeleteBtn) {
+        console.log('Attaching event listener to Confirm Delete button (original variable)');
+        confirmDeleteBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            console.log('Confirm Delete button clicked (original variable)');
+            deleteProduct();
+        });
+    } else {
+        console.error('Confirm Delete button not found');
+    }
+    
+    // Attach event listener for save product button
+    if (saveProductBtn) {
+        console.log('Attaching event listener to Save Product button');
+        saveProductBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            console.log('Save Product button clicked');
+            saveProduct();
+        });
+    } else {
+        console.error('Save Product button not found');
+    }
+
+    // Load authenticated user info and then initialize data
+    fetch('/api/user', { headers: { 'Authorization': `Bearer ${token}` } })
+        .then(res => res.ok ? res.json() : Promise.reject())
+        .then(resp => {
+            const user = resp.data.user;
+            if (user && user.name) userNameDisplay.textContent = user.name;
+        })
+        .catch(() => {})
+        .finally(() => {
+            loadCategories();
+            loadProducts();
+        });
 
     // Search input handler with debounce
     let searchTimeout;
@@ -596,19 +712,4 @@ document.addEventListener('DOMContentLoaded', function() {
     document.getElementById('sidebarToggle').addEventListener('click', function() {
         document.querySelector('.sidebar').classList.toggle('show');
     });
-
-    // Attach logout handler to both logout buttons
-    document.getElementById('logoutBtn').addEventListener('click', function(e) {
-        e.preventDefault();
-        handleLogout();
-    });
-    
-    document.getElementById('sidebarLogoutBtn').addEventListener('click', function(e) {
-        e.preventDefault();
-        handleLogout();
-    });
-
-    // Initial load
-    loadCategories();
-    loadProducts();
 });
