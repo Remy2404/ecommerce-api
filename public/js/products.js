@@ -241,9 +241,16 @@ document.addEventListener('DOMContentLoaded', function() {
                     confirmDelete(productId);
                 });
             });
-            
-            // Count how many buttons we added listeners to
+              // Count how many buttons we added listeners to
             console.log(`Added event listeners to ${document.querySelectorAll('.edit-product').length} edit buttons and ${document.querySelectorAll('.delete-product').length} delete buttons`);
+            
+            // Add event listeners to the new checkboxes for bulk selection
+            document.querySelectorAll('.product-checkbox').forEach(checkbox => {
+                checkbox.addEventListener('change', function() {
+                    console.log('Product checkbox changed');
+                    updateBulkActionButton();
+                });
+            });
         })        .catch(error => {
             console.error('Error loading products:', error);
             productsTableBody.innerHTML = '<tr><td colspan="8" class="text-center text-danger">Error loading products. Please try again.</td></tr>';
@@ -351,19 +358,37 @@ document.addEventListener('DOMContentLoaded', function() {
                 throw new Error('Failed to fetch product details');
             }
             return response.json();
-        })
-        .then(data => {
-            const product = data.data;
+        })        .then(data => {
+            console.log('Edit Product API Response:', data);
+            
+            // Handle different response formats
+            let product;
+            if (data.data) {
+                product = data.data;
+            } else if (data.product) {
+                product = data.product;
+            } else if (data.id) {
+                product = data;
+            } else {
+                throw new Error('Invalid API response format');
+            }
+            
+            console.log('Product data for editing:', product);
+            
+            // Validate that we have the required product data
+            if (!product || !product.id) {
+                throw new Error('Product data is missing or invalid');
+            }
             
             // Populate form with product details
             productId.value = product.id;
-            productName.value = product.name;
+            productName.value = product.name || '';
             productCategory.value = product.category_id || '';
-            productPrice.value = product.price;
-            productStock.value = product.stock_quantity;
+            productPrice.value = product.price || '';
+            productStock.value = product.stock_quantity || '';
             productDescription.value = product.description || '';
             productImage.value = product.image_url || '';
-            productActive.checked = product.is_active;
+            productActive.checked = product.is_active || false;
             
             // Update modal title
             document.getElementById('productModalLabel').textContent = 'Edit Product';
@@ -588,12 +613,15 @@ document.addEventListener('DOMContentLoaded', function() {
         });
         
         updateBulkActionButton();
-    }
-
-    // Function to update the state of the bulk action button
+    }    // Function to update the state of the bulk action button
     function updateBulkActionButton() {
         const checkboxes = document.querySelectorAll('.product-checkbox:checked');
         const bulkActionBtn = document.getElementById('bulkActionBtn');
+        
+        if (!bulkActionBtn) {
+            console.error('Bulk action button not found');
+            return;
+        }
         
         if (checkboxes.length > 0) {
             bulkActionBtn.removeAttribute('disabled');
@@ -706,10 +734,37 @@ document.addEventListener('DOMContentLoaded', function() {
 
     sortProducts.addEventListener('change', function() {
         loadProducts();
-    });
-
-    // Handle sidebar toggle on mobile
+    });    // Handle sidebar toggle on mobile
     document.getElementById('sidebarToggle').addEventListener('click', function() {
         document.querySelector('.sidebar').classList.toggle('show');
+    });
+    
+    // Add bulk action event listeners
+    if (selectAllCheckbox) {
+        console.log('Attaching event listener to Select All checkbox');
+        selectAllCheckbox.addEventListener('change', function() {
+            console.log('Select All checkbox changed:', this.checked);
+            toggleSelectAllProducts();
+        });
+    } else {
+        console.error('Select All checkbox not found');
+    }
+      if (bulkActionBtn) {
+        console.log('Attaching event listener to Bulk Action button');
+        bulkActionBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            console.log('Bulk Action button clicked');
+            bulkDeleteProducts();
+        });
+    } else {
+        console.error('Bulk Action button not found');
+    }
+    
+    // Add global event delegation for dynamic checkboxes
+    document.addEventListener('change', function(e) {
+        if (e.target && e.target.classList.contains('product-checkbox')) {
+            console.log('Product checkbox changed via delegation');
+            updateBulkActionButton();
+        }
     });
 });
