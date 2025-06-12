@@ -172,9 +172,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 totalProducts = data.pagination.total;
             } else {
                 console.error('No pagination data found in response');
-            }
-              if (data.data.length === 0) {
-                productsTableBody.innerHTML = '<tr><td colspan="8" class="text-center">No products found</td></tr>';
+            }            if (data.data.length === 0) {
+                productsTableBody.innerHTML = '<tr><td colspan="10" class="text-center">No products found</td></tr>';
                 paginationContainer.innerHTML = '';
                 return;
             }
@@ -187,6 +186,36 @@ document.addEventListener('DOMContentLoaded', function() {
                     statusBadge = '<span class="badge bg-success product-status">Active</span>';
                 } else {
                     statusBadge = '<span class="badge bg-secondary product-status">Inactive</span>';
+                }
+                
+                // Cart button logic
+                let cartButton = '';
+                if (isLoggedIn && product.is_active) {
+                    if (product.stock_quantity > 0) {
+                        cartButton = `
+                            <button class="btn btn-sm btn-success add-to-cart-btn" data-product-id="${product.id}" data-product-name="${product.name}" data-product-price="${product.price}">
+                                <i class="bi bi-cart-plus"></i> Add to Cart
+                            </button>
+                        `;
+                    } else {
+                        cartButton = `
+                            <button class="btn btn-sm btn-secondary" disabled>
+                                <i class="bi bi-x-circle"></i> Out of Stock
+                            </button>
+                        `;
+                    }
+                } else if (!isLoggedIn) {
+                    cartButton = `
+                        <button class="btn btn-sm btn-outline-primary" onclick="window.location.href='login.html'">
+                            <i class="bi bi-box-arrow-in-right"></i> Login to Add
+                        </button>
+                    `;
+                } else {
+                    cartButton = `
+                        <button class="btn btn-sm btn-secondary" disabled>
+                            <i class="bi bi-x-circle"></i> Unavailable
+                        </button>
+                    `;
                 }
                 
                 tableContent += `
@@ -207,6 +236,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     <td>$${parseFloat(product.price).toFixed(2)}</td>
                     <td>${product.stock_quantity}</td>
                     <td>${statusBadge}</td>
+                    <td class="text-center">${cartButton}</td>
                     <td class="product-actions">
                         <button class="btn btn-sm btn-primary edit-product" data-id="${product.id}">
                             <i class="bi bi-pencil"></i>
@@ -240,9 +270,20 @@ document.addEventListener('DOMContentLoaded', function() {
                     console.log('Delete button clicked for product ID:', productId);
                     confirmDelete(productId);
                 });
-            });
-              // Count how many buttons we added listeners to
+            });              // Count how many buttons we added listeners to
             console.log(`Added event listeners to ${document.querySelectorAll('.edit-product').length} edit buttons and ${document.querySelectorAll('.delete-product').length} delete buttons`);
+            
+            // Add event listeners to the Add to Cart buttons
+            document.querySelectorAll('.add-to-cart-btn').forEach(button => {
+                button.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    console.log('Add to Cart button clicked');
+                    const productId = this.getAttribute('data-product-id');
+                    const productName = this.getAttribute('data-product-name');
+                    const productPrice = this.getAttribute('data-product-price');
+                    addToCart(productId, productName, productPrice, this);
+                });
+            });
             
             // Add event listeners to the new checkboxes for bulk selection
             document.querySelectorAll('.product-checkbox').forEach(checkbox => {
@@ -253,7 +294,7 @@ document.addEventListener('DOMContentLoaded', function() {
             });
         })        .catch(error => {
             console.error('Error loading products:', error);
-            productsTableBody.innerHTML = '<tr><td colspan="8" class="text-center text-danger">Error loading products. Please try again.</td></tr>';
+            productsTableBody.innerHTML = '<tr><td colspan="9" class="text-center text-danger">Error loading products. Please try again.</td></tr>';
             
             // Check if token might be expired or invalid
             if (error.message === 'Failed to fetch products') {
@@ -630,9 +671,7 @@ document.addEventListener('DOMContentLoaded', function() {
             bulkActionBtn.setAttribute('disabled', 'disabled');
             bulkActionBtn.textContent = 'Delete Selected';
         }
-    }
-
-    // Function to show alert message
+    }    // Function to show alert message
     function showAlert(alertElement, message) {
         alertElement.textContent = message;
         alertElement.style.display = 'block';
@@ -640,6 +679,98 @@ document.addEventListener('DOMContentLoaded', function() {
         setTimeout(() => {
             alertElement.style.display = 'none';
         }, 5000);
+    }
+
+    // Cart Management Functions
+    
+    // Function to load cart count and update badge
+    function loadCartCount() {
+        if (!token) return;
+        
+        fetch('/api/cart', {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json',
+                'Authorization': `Bearer ${token}`
+            }
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Failed to fetch cart');
+            }
+            return response.json();
+        })
+        .then(data => {
+            const cartBadge = document.getElementById('cartBadge');
+            const totalItems = data.data.cart.total_items || 0;
+            
+            if (totalItems > 0) {
+                cartBadge.textContent = totalItems;
+                cartBadge.style.display = 'block';
+            } else {
+                cartBadge.style.display = 'none';
+            }
+        })
+        .catch(error => {
+            console.error('Error loading cart count:', error);
+            // Hide badge on error
+            const cartBadge = document.getElementById('cartBadge');
+            cartBadge.style.display = 'none';
+        });
+    }
+    
+    // Function to add item to cart
+    function addToCart(productId, productName, productPrice, buttonElement) {
+        if (!token) {
+            showAlert(errorAlert, 'Please log in to add items to cart.');
+            return;
+        }
+        
+        // Show loading state
+        const originalText = buttonElement.innerHTML;
+        buttonElement.disabled = true;
+        buttonElement.innerHTML = '<i class="bi bi-hourglass-split"></i> Adding...';
+        
+        fetch('/api/cart/items', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json',
+                'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify({
+                product_id: parseInt(productId),
+                quantity: 1
+            })
+        })
+        .then(response => {
+            if (!response.ok) {
+                return response.json().then(data => {
+                    throw new Error(data.message || 'Failed to add item to cart');
+                });
+            }
+            return response.json();
+        })
+        .then(data => {
+            // Show success message
+            showAlert(successAlert, `${productName} added to cart successfully!`);
+            
+            // Update cart badge
+            loadCartCount();
+            
+            // Reset button state
+            buttonElement.disabled = false;
+            buttonElement.innerHTML = originalText;
+        })
+        .catch(error => {
+            console.error('Error adding to cart:', error);
+            showAlert(errorAlert, `Failed to add ${productName} to cart: ${error.message}`);
+            
+            // Reset button state
+            buttonElement.disabled = false;
+            buttonElement.innerHTML = originalText;
+        });
     }
 
     // Handle logout function
@@ -701,9 +832,7 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     } else {
         console.error('Save Product button not found');
-    }
-
-    // Load authenticated user info and then initialize data
+    }    // Load authenticated user info and then initialize data
     fetch('/api/user', { headers: { 'Authorization': `Bearer ${token}` } })
         .then(res => res.ok ? res.json() : Promise.reject())
         .then(resp => {
@@ -714,6 +843,7 @@ document.addEventListener('DOMContentLoaded', function() {
         .finally(() => {
             loadCategories();
             loadProducts();
+            loadCartCount();
         });
 
     // Search input handler with debounce

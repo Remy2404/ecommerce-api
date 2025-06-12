@@ -9,6 +9,9 @@ document.addEventListener('DOMContentLoaded', function() {
         return;
     }
 
+    // Load cart count on page load
+    loadCartCount();
+
     // Elements for display
     const userNameDisplay = document.getElementById('userNameDisplay');
     const profileName = document.getElementById('profileName');
@@ -101,11 +104,41 @@ document.addEventListener('DOMContentLoaded', function() {
                 localStorage.removeItem('auth_token');
                 window.location.href = 'login.html';
             });
-    }
-
-    // Attach logout handlers
+    }    // Attach logout handlers
     const logoutBtn = document.getElementById('logoutBtn');
     const sidebarLogoutBtn = document.getElementById('sidebarLogoutBtn');
     if (logoutBtn) logoutBtn.addEventListener('click', e => { e.preventDefault(); handleLogout(); });
-    if (sidebarLogoutBtn) sidebarLogoutBtn.addEventListener('click', e => { e.preventDefault(); handleLogout(); });
+    if (sidebarLogoutBtn) sidebarLogoutBtn.addEventListener('click', e => { e.preventDefault(); handleLogout(); });    // Cart functionality
+    async function loadCartCount() {
+        const token = localStorage.getItem('auth_token');
+        if (!token) return;
+
+        try {
+            const response = await fetch('/api/cart', {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                const cartBadge = document.getElementById('cartBadge');
+                
+                if (data.data && data.data.cart && data.data.cart.items) {
+                    const totalItems = data.data.cart.total_items || data.data.cart.items.reduce((sum, item) => sum + item.quantity, 0);
+                    if (cartBadge) {
+                        cartBadge.textContent = totalItems;
+                        cartBadge.style.display = totalItems > 0 ? 'inline' : 'none';
+                    }
+                } else {
+                    if (cartBadge) cartBadge.style.display = 'none';
+                }
+            }
+        } catch (error) {
+            console.error('Error loading cart count:', error);
+        }
+    }
 });

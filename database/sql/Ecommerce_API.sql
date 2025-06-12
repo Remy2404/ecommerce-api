@@ -62,7 +62,7 @@ CREATE TABLE `categories` (
     `name` VARCHAR(255) NOT NULL,
     `slug` VARCHAR(255) NOT NULL UNIQUE,
     `description` TEXT NULL DEFAULT NULL,
-    `parent_id` BIGINT UNSIGNED NULL DEFAULT NULL, -- For subcategories (self-referencing)
+    `parent_id` BIGINT UNSIGNED NULL DEFAULT NULL,
     `image_url` VARCHAR(2048) NULL DEFAULT NULL,
     `created_at` TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP,
     `updated_at` TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
@@ -70,7 +70,6 @@ CREATE TABLE `categories` (
     INDEX `idx_categories_slug` (`slug`),
     CONSTRAINT `fk_categories_parent` FOREIGN KEY (`parent_id`) REFERENCES `categories` (`id`) ON DELETE SET NULL ON UPDATE CASCADE
 ) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_unicode_ci;
-
 SELECT * FROM `categories`;
 
 -- ----------------------------
@@ -161,6 +160,7 @@ CREATE TABLE `orders` (
     CONSTRAINT `fk_orders_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE RESTRICT ON UPDATE CASCADE -- RESTRICT delete if user has orders, or handle differently
 ) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_unicode_ci;
 
+SELECT * FROM `orders`;
 -- ----------------------------
 -- Table structure for order_items (Many-to-Many between orders and products)
 -- ----------------------------
@@ -180,7 +180,7 @@ CREATE TABLE `order_items` (
     CONSTRAINT `fk_order_items_order` FOREIGN KEY (`order_id`) REFERENCES `orders` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
     CONSTRAINT `fk_order_items_product` FOREIGN KEY (`product_id`) REFERENCES `products` (`id`) ON DELETE RESTRICT ON UPDATE CASCADE -- RESTRICT if product is part of an order
 ) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_unicode_ci;
-
+SELECT * FROM `orders`;
 -- ----------------------------
 -- Table structure for tags (for products, Many-to-Many)
 -- ----------------------------
@@ -196,6 +196,7 @@ CREATE TABLE `tags` (
     INDEX `idx_tags_slug` (`slug`)
 ) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_unicode_ci;
 
+SELECT * FROM `tags`;
 -- ----------------------------
 -- Table structure for product_tag (Pivot table for products and tags)
 -- ----------------------------

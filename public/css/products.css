@@ -144,3 +144,123 @@
 @keyframes spin {
     to { transform: rotate(360deg); }
 }
+
+/* Cart functionality styles */
+.cart-controls {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    justify-content: center;
+}
+
+.quantity-input {
+    width: 60px;
+    padding: 4px 8px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    text-align: center;
+}
+
+/* Cart button enhancements */
+.add-to-cart-btn {
+    font-size: 0.875rem;
+    padding: 6px 12px;
+    border-radius: 5px;
+    border: none;
+    background-color: #28a745;
+    color: white;
+    transition: all 0.2s ease-in-out;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.add-to-cart-btn:hover {
+    background-color: #218838;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.add-to-cart-btn:active {
+    transform: translateY(0);
+}
+
+.add-to-cart-btn:disabled {
+    background-color: #6c757d;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+}
+
+/* Out of stock button */
+.btn-secondary:disabled {
+    opacity: 0.7;
+}
+
+/* Login to add button */
+.btn-outline-primary {
+    transition: all 0.2s ease-in-out;
+}
+
+.btn-outline-primary:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+/* Cart badge in navbar */
+#cartBadge {
+    font-size: 0.75rem;
+    min-width: 18px;
+    height: 18px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    animation: pulse 0.3s ease-in-out;
+}
+
+@keyframes pulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.2); }
+    100% { transform: scale(1); }
+}
+
+/* Cart icon hover effect */
+#cartIcon {
+    transition: all 0.2s ease-in-out;
+    padding: 8px;
+    border-radius: 5px;
+}
+
+#cartIcon:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+    transform: translateY(-1px);
+}
+
+/* Loading state for cart buttons */
+.cart-loading {
+    opacity: 0.6;
+    pointer-events: none;
+}
+
+/* Stock warning styles */
+.low-stock {
+    color: #fd7e14;
+    font-weight: 500;
+}
+
+.out-of-stock {
+    color: #dc3545;
+    font-weight: 600;
+}
+
+/* Success animation for add to cart */
+.cart-success-animation {
+    animation: cartSuccess 0.5s ease-in-out;
+}
+
+@keyframes cartSuccess {
+    0% { transform: scale(1); }
+    25% { transform: scale(1.1); background-color: #20c997; }
+    50% { transform: scale(1.05); background-color: #20c997; }
+    100% { transform: scale(1); }
+}
