@@ -57,11 +57,12 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/user', [AuthController::class, 'user']);
     // Category summary
     Route::get('/categories/summary', [CategoryController::class, 'summary']);
-    
+    // Profile
     // Cart routes
     Route::get('/cart', [CartController::class, 'show']);
     Route::post('/cart/items', [CartController::class, 'addItem']);
-    Route::put('/cart/items/{id}', [CartController::class, 'updateItem']);    Route::delete('/cart/items/{id}', [CartController::class, 'removeItem']);
+    Route::put('/cart/items/{id}', [CartController::class, 'updateItem']);
+    Route::delete('/cart/items/{id}', [CartController::class, 'removeItem']);
     Route::delete('/cart', [CartController::class, 'clear']);
     
     // Admin routes

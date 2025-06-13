@@ -7,6 +7,7 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
     <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
     <link rel="stylesheet" href="css/styles.css">
     <link rel="stylesheet" href="css/index.css">
     <link rel="stylesheet" href="css/index-enhanced.css">
@@ -29,6 +30,9 @@
                     <li class="nav-item">
                         <a class="nav-link" href="#features">Features</a>
                     </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#database-schema">Database</a>
+                    </li>
                     <li class="nav-item dropdown">
                         <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
                             More
@@ -36,6 +40,8 @@
                         <ul class="dropdown-menu">
                             <li><a class="dropdown-item" href="#about">Project Overview</a></li>
                             <li><a class="dropdown-item" href="#features">Features</a></li>
+                            <li><a class="dropdown-item" href="#database-schema">Database Schema</a></li>
+                            <li><a class="dropdown-item" href="#schema-explanation">Schema Explained</a></li>
                             <li><hr class="dropdown-divider"></li>
                             <li><a class="dropdown-item" href="products.html">Products</a></li>
                             <li><a class="dropdown-item" href="cart.html">Shopping Cart</a></li>
@@ -114,6 +120,10 @@
                             <div class="tech-item" data-aos="zoom-in" data-aos-delay="400">
                                 <i class="bi bi-shield-lock"></i>
                                 <span>Sanctum</span>
+                            </div>
+                            <div class="tech-item" data-aos="zoom-in" data-aos-delay="500">
+                                <i class="bi bi-bootstrap"></i>
+                                <span>Bootstrap</span>
                             </div>
                         </div>
                     </div>
@@ -305,6 +315,449 @@
         </div>
     </section>
 
+    <!-- Database Schema Section -->
+    <section class="database-schema-section py-5" id="database-schema">
+        <div class="container">
+            <div class="text-center mb-5" data-aos="fade-up">
+                <h2 class="section-title">Database Architecture</h2>
+                <p class="section-subtitle text-muted">Interactive Entity-Relationship Diagram showcasing our comprehensive database design</p>
+            </div>
+            
+            <div class="row">
+                <div class="col-lg-8 mx-auto" data-aos="fade-up" data-aos-delay="100">
+                    <div class="schema-card">
+                        <div class="schema-header">
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <h4 class="mb-0">
+                                    <i class="bi bi-diagram-3-fill text-primary me-2"></i>
+                                    E-commerce Database Schema
+                                </h4>
+                                <div class="schema-controls">
+                                    <button type="button" class="btn btn-outline-primary btn-sm me-2" id="fullscreenBtn" title="Fullscreen View">
+                                        <i class="bi bi-arrows-fullscreen"></i>
+                                    </button>
+                                    <button type="button" class="btn btn-outline-secondary btn-sm" id="resetZoomBtn" title="Reset Zoom">
+                                        <i class="bi bi-arrow-counterclockwise"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            <p class="text-muted mb-4">
+                                This interactive diagram illustrates the complete database structure with all entity relationships, 
+                                foreign keys, and data types. Click and drag to explore the schema.
+                            </p>
+                        </div>
+                        
+                        <div class="schema-container" id="schemaContainer">
+                            <div class="mermaid" id="databaseDiagram">
+                                erDiagram
+                                    users {
+                                        BIGINT id PK "AUTO_INCREMENT"
+                                        VARCHAR name "NOT NULL"
+                                        VARCHAR email "NOT NULL, UNIQUE"
+                                        BOOLEAN is_admin "NOT NULL, DEFAULT FALSE"
+                                        TIMESTAMP created_at
+                                        TIMESTAMP updated_at
+                                    }
+
+                                    user_profiles {
+                                        BIGINT user_id PK "FK to users.id"
+                                        VARCHAR phone_number
+                                        VARCHAR address_line1
+                                        VARCHAR city
+                                        VARCHAR country
+                                    }
+
+                                    orders {
+                                        BIGINT id PK "AUTO_INCREMENT"
+                                        BIGINT user_id FK "to users.id"
+                                        VARCHAR order_number "NOT NULL, UNIQUE"
+                                        DECIMAL total_amount "NOT NULL"
+                                        ENUM status "pending, paid, etc."
+                                        TIMESTAMP ordered_at
+                                    }
+
+                                    order_items {
+                                        BIGINT id PK "AUTO_INCREMENT"
+                                        BIGINT order_id FK "to orders.id"
+                                        BIGINT product_id FK "to products.id"
+                                        INT quantity "NOT NULL"
+                                        DECIMAL price_at_purchase "NOT NULL"
+                                    }
+
+                                    products {
+                                        BIGINT id PK "AUTO_INCREMENT"
+                                        BIGINT category_id FK "to categories.id"
+                                        VARCHAR name "NOT NULL"
+                                        VARCHAR slug "NOT NULL, UNIQUE"
+                                        DECIMAL price "NOT NULL"
+                                        INT stock_quantity "NOT NULL"
+                                    }
+
+                                    product_images {
+                                        BIGINT id PK "AUTO_INCREMENT"
+                                        BIGINT product_id FK "to products.id"
+                                        VARCHAR image_url "NOT NULL"
+                                        BOOLEAN is_primary "DEFAULT FALSE"
+                                    }
+
+                                    categories {
+                                        BIGINT id PK "AUTO_INCREMENT"
+                                        BIGINT parent_id FK "to categories.id (self-ref)"
+                                        VARCHAR name "NOT NULL"
+                                        VARCHAR slug "NOT NULL, UNIQUE"
+                                    }
+
+                                    product_tag {
+                                        BIGINT product_id PK "FK to products.id"
+                                        BIGINT tag_id PK "FK to tags.id"
+                                    }
+
+                                    tags {
+                                        BIGINT id PK "AUTO_INCREMENT"
+                                        VARCHAR name "NOT NULL, UNIQUE"
+                                        VARCHAR slug "NOT NULL, UNIQUE"
+                                    }
+
+                                    carts {
+                                        BIGINT id PK "AUTO_INCREMENT"
+                                        BIGINT user_id FK "to users.id (nullable)"
+                                        VARCHAR session_id UK "for guest carts"
+                                    }
+
+                                    cart_items {
+                                        BIGINT id PK "AUTO_INCREMENT"
+                                        BIGINT cart_id FK "to carts.id"
+                                        BIGINT product_id FK "to products.id"
+                                        INT quantity "NOT NULL"
+                                    }
+
+                                    users ||--o| user_profiles : "has one profile"
+                                    users ||--o{ orders : "places"
+                                    users ||--o| carts : "has one cart"
+                                    orders ||--o{ order_items : "contains"
+                                    products ||--o{ order_items : "is in"
+                                    categories ||--o{ products : "contains"
+                                    categories }o--o| categories : "is subcategory of"
+                                    products ||--o{ product_images : "has multiple"
+                                    products }o--o{ product_tag : "is tagged with"
+                                    tags ||--o{ product_tag : "tags"
+                                    carts ||--o{ cart_items : "contains"
+                                    products ||--o{ cart_items : "is in"
+                            </div>
+                        </div>
+                        
+                        <div class="schema-legend mt-4">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <h6 class="text-primary mb-3">
+                                        <i class="bi bi-info-circle me-2"></i>Relationship Types
+                                    </h6>
+                                    <div class="legend-items">
+                                        <div class="legend-item">
+                                            <span class="legend-symbol">||--o|</span>
+                                            <span class="legend-text">One-to-One</span>
+                                        </div>
+                                        <div class="legend-item">
+                                            <span class="legend-symbol">||--o{</span>
+                                            <span class="legend-text">One-to-Many</span>
+                                        </div>
+                                        <div class="legend-item">
+                                            <span class="legend-symbol">}o--o{</span>
+                                            <span class="legend-text">Many-to-Many</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <h6 class="text-primary mb-3">
+                                        <i class="bi bi-key me-2"></i>Key Types
+                                    </h6>
+                                    <div class="legend-items">
+                                        <div class="legend-item">
+                                            <span class="legend-symbol">PK</span>
+                                            <span class="legend-text">Primary Key</span>
+                                        </div>
+                                        <div class="legend-item">
+                                            <span class="legend-symbol">FK</span>
+                                            <span class="legend-text">Foreign Key</span>
+                                        </div>
+                                        <div class="legend-item">
+                                            <span class="legend-symbol">UK</span>
+                                            <span class="legend-text">Unique Key</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="row mt-5">
+                <div class="col-lg-4" data-aos="fade-up" data-aos-delay="200">
+                    <div class="schema-feature-card">
+                        <div class="feature-icon">
+                            <i class="bi bi-diagram-2"></i>
+                        </div>
+                        <h5>Normalized Design</h5>
+                        <p>Database follows 3NF normalization principles to eliminate redundancy and maintain data integrity across all entities.</p>
+                    </div>
+                </div>
+                <div class="col-lg-4" data-aos="fade-up" data-aos-delay="300">
+                    <div class="schema-feature-card">
+                        <div class="feature-icon">
+                            <i class="bi bi-arrows-expand"></i>
+                        </div>
+                        <h5>Scalable Structure</h5>
+                        <p>Designed to handle complex e-commerce scenarios with hierarchical categories, multiple product images, and flexible tagging.</p>
+                    </div>
+                </div>
+                <div class="col-lg-4" data-aos="fade-up" data-aos-delay="400">
+                    <div class="schema-feature-card">
+                        <div class="feature-icon">
+                            <i class="bi bi-shield-check"></i>
+                        </div>
+                        <h5>Data Integrity</h5>
+                        <p>Comprehensive foreign key constraints and proper indexing ensure referential integrity and optimal query performance.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Schema Explanation Section -->
+    <section class="schema-explanation-section bg-light py-5" id="schema-explanation">
+        <div class="container">
+            <div class="text-center mb-5" data-aos="fade-up">
+                <h2 class="section-title">Schema Detailed Explanation</h2>
+                <p class="section-subtitle text-muted">Understanding the database architecture and entity relationships</p>
+            </div>
+
+            <!-- Core Entities Explanation -->
+            <div class="row mb-5">
+                <div class="col-12" data-aos="fade-up">
+                    <div class="explanation-card">
+                        <h3 class="explanation-title">
+                            <i class="bi bi-diagram-3 text-primary me-3"></i>Core Entities Overview
+                        </h3>
+                        <div class="row">
+                            <div class="col-lg-6">
+                                <div class="entity-group">
+                                    <h5 class="text-primary mb-3">
+                                        <i class="bi bi-people-fill me-2"></i>User Management
+                                    </h5>
+                                    <div class="entity-item">
+                                        <h6><strong>users</strong> - Main user authentication table</h6>
+                                        <ul class="entity-details">
+                                            <li><code>id</code> - Primary key (BIGINT, auto-increment)</li>
+                                            <li><code>name</code> - User's full name (VARCHAR, required)</li>
+                                            <li><code>email</code> - Unique email address (VARCHAR, unique)</li>
+                                            <li><code>is_admin</code> - Admin role flag (BOOLEAN, default false)</li>
+                                            <li><code>created_at, updated_at</code> - Timestamps</li>
+                                        </ul>
+                                    </div>
+                                    <div class="entity-item">
+                                        <h6><strong>user_profiles</strong> - Extended user information</h6>
+                                        <ul class="entity-details">
+                                            <li><code>user_id</code> - Foreign key to users.id (One-to-One)</li>
+                                            <li><code>phone_number</code> - Contact number (optional)</li>
+                                            <li><code>address_line1, city, country</code> - Address details</li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-lg-6">
+                                <div class="entity-group">
+                                    <h5 class="text-success mb-3">
+                                        <i class="bi bi-box-seam me-2"></i>Product Catalog
+                                    </h5>
+                                    <div class="entity-item">
+                                        <h6><strong>products</strong> - Main product information</h6>
+                                        <ul class="entity-details">
+                                            <li><code>id</code> - Primary key (BIGINT, auto-increment)</li>
+                                            <li><code>category_id</code> - Foreign key to categories</li>
+                                            <li><code>name</code> - Product name (VARCHAR, required)</li>
+                                            <li><code>slug</code> - URL-friendly identifier (unique)</li>
+                                            <li><code>price</code> - Product price (DECIMAL)</li>
+                                            <li><code>stock_quantity</code> - Available inventory (INT)</li>
+                                        </ul>
+                                    </div>
+                                    <div class="entity-item">
+                                        <h6><strong>categories</strong> - Hierarchical product categorization</h6>
+                                        <ul class="entity-details">
+                                            <li><code>id</code> - Primary key (BIGINT, auto-increment)</li>
+                                            <li><code>parent_id</code> - Self-referencing FK for subcategories</li>
+                                            <li><code>name, slug</code> - Category name and URL slug</li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Relationship Patterns -->
+            <div class="row mb-5">
+                <div class="col-lg-4" data-aos="fade-up" data-aos-delay="100">
+                    <div class="relationship-card">
+                        <div class="relationship-header">
+                            <i class="bi bi-arrow-right-circle text-info"></i>
+                            <h4>One-to-One</h4>
+                        </div>
+                        <div class="relationship-content">
+                            <h6>users ↔ user_profiles</h6>
+                            <p>Each user has exactly one profile, and each profile belongs to exactly one user.</p>
+                            <div class="code-example">
+                                <pre><code>User::hasOne(UserProfile::class)
+UserProfile::belongsTo(User::class)</code></pre>
+                            </div>
+                            <p class="relationship-benefit">
+                                <strong>Benefit:</strong> Separates core authentication data from optional profile information.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-4" data-aos="fade-up" data-aos-delay="200">
+                    <div class="relationship-card">
+                        <div class="relationship-header">
+                            <i class="bi bi-arrow-right-circle-fill text-warning"></i>
+                            <h4>One-to-Many</h4>
+                        </div>
+                        <div class="relationship-content">
+                            <h6>users → orders</h6>
+                            <p>One user can place multiple orders, but each order belongs to only one user.</p>
+                            <div class="code-example">
+                                <pre><code>User::hasMany(Order::class)
+Order::belongsTo(User::class)</code></pre>
+                            </div>
+                            <h6 class="mt-3">categories → products</h6>
+                            <p>One category contains multiple products.</p>
+                            <p class="relationship-benefit">
+                                <strong>Benefit:</strong> Maintains data integrity while allowing flexible associations.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-4" data-aos="fade-up" data-aos-delay="300">
+                    <div class="relationship-card">
+                        <div class="relationship-header">
+                            <i class="bi bi-arrows-expand text-danger"></i>
+                            <h4>Many-to-Many</h4>
+                        </div>
+                        <div class="relationship-content">
+                            <h6>products ↔ tags</h6>
+                            <p>Products can have multiple tags, and tags can be applied to multiple products.</p>
+                            <div class="code-example">
+                                <pre><code>Product::belongsToMany(Tag::class)
+Tag::belongsToMany(Product::class)</code></pre>
+                            </div>
+                            <h6 class="mt-3">orders ↔ products</h6>
+                            <p>Through order_items pivot table with additional data.</p>
+                            <p class="relationship-benefit">
+                                <strong>Benefit:</strong> Flexible tagging and complex order management.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Advanced Features -->
+            <div class="row mb-5">
+                <div class="col-lg-6" data-aos="fade-up" data-aos-delay="100">
+                    <div class="advanced-feature-card">
+                        <h4 class="text-primary">
+                            <i class="bi bi-gear-fill me-2"></i>Advanced Schema Features
+                        </h4>
+                        <div class="feature-list">
+                            <div class="feature-item">
+                                <h6><i class="bi bi-arrow-repeat text-success"></i> Self-Referencing Relationships</h6>
+                                <p>Categories table uses <code>parent_id</code> to create hierarchical structures like "Electronics > Laptops > Gaming Laptops".</p>
+                            </div>
+                            <div class="feature-item">
+                                <h6><i class="bi bi-table text-info"></i> Pivot Tables with Extra Data</h6>
+                                <p>The <code>order_items</code> table stores not just product-order relationships but also quantity and price at purchase time.</p>
+                            </div>
+                            <div class="feature-item">
+                                <h6><i class="bi bi-shield-check text-warning"></i> Soft Constraints</h6>
+                                <p>Cart system supports both authenticated users and guest sessions through nullable <code>user_id</code> and <code>session_id</code>.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-6" data-aos="fade-up" data-aos-delay="200">
+                    <div class="advanced-feature-card">
+                        <h4 class="text-success">
+                            <i class="bi bi-lightning-fill me-2"></i>Performance Optimizations
+                        </h4>
+                        <div class="feature-list">
+                            <div class="feature-item">
+                                <h6><i class="bi bi-search text-primary"></i> Strategic Indexing</h6>
+                                <p>Primary keys, foreign keys, and unique constraints (like email, slug) are automatically indexed for fast queries.</p>
+                            </div>
+                            <div class="feature-item">
+                                <h6><i class="bi bi-link-45deg text-secondary"></i> Eager Loading Ready</h6>
+                                <p>Relationships designed for efficient Laravel Eloquent eager loading to prevent N+1 query problems.</p>
+                            </div>
+                            <div class="feature-item">
+                                <h6><i class="bi bi-layers text-info"></i> Normalized Structure</h6>
+                                <p>Third Normal Form (3NF) compliance eliminates data redundancy and maintains consistency.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Business Logic Examples -->
+            <div class="row">
+                <div class="col-12" data-aos="fade-up">
+                    <div class="business-logic-card">
+                        <h3 class="text-center mb-4">
+                            <i class="bi bi-briefcase-fill text-primary me-2"></i>Business Logic Examples
+                        </h3>
+                        <div class="row">
+                            <div class="col-lg-4">
+                                <div class="logic-example">
+                                    <h5><i class="bi bi-cart-check text-success"></i> Order Processing</h5>
+                                    <div class="logic-steps">
+                                        <div class="step">1. User adds products to cart</div>
+                                        <div class="step">2. Cart items stored with session/user ID</div>
+                                        <div class="step">3. Checkout creates order record</div>
+                                        <div class="step">4. Cart items converted to order_items</div>
+                                        <div class="step">5. Product stock quantities updated</div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-lg-4">
+                                <div class="logic-example">
+                                    <h5><i class="bi bi-tags text-warning"></i> Product Categorization</h5>
+                                    <div class="logic-steps">
+                                        <div class="step">1. Create hierarchical categories</div>
+                                        <div class="step">2. Assign products to categories</div>
+                                        <div class="step">3. Apply multiple tags to products</div>
+                                        <div class="step">4. Enable category/tag-based filtering</div>
+                                        <div class="step">5. Support breadcrumb navigation</div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-lg-4">
+                                <div class="logic-example">
+                                    <h5><i class="bi bi-person-gear text-info"></i> User Management</h5>
+                                    <div class="logic-steps">
+                                        <div class="step">1. Register with basic info (users table)</div>
+                                        <div class="step">2. Complete profile (user_profiles)</div>
+                                        <div class="step">3. Maintain order history</div>
+                                        <div class="step">4. Persistent cart across sessions</div>
+                                        <div class="step">5. Admin role management</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
     <!-- Future Plans Section -->
     <section class="future-plans-section py-5">
         <div class="container">
@@ -414,9 +867,11 @@
             <hr class="mt-4 mb-3">
             <div class="text-center">
                 <p class="mb-0">&copy; 2025 Ecommerce API. All rights reserved.</p>
+                <p class="mb-0">Built with  <i class="bi bi-heart-fill text-danger"></i> by <a href="https://github.com/Remy2404" target="_blank">Ramy</a></p>
             </div>
         </div>
     </footer>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
     <script src="js/index.js"></script>

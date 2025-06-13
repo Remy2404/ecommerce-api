@@ -1,0 +1,100 @@
+erDiagram
+
+    users {
+        BIGINT id PK "AUTO_INCREMENT"
+        VARCHAR name "NOT NULL"
+        VARCHAR email "NOT NULL, UNIQUE"
+        BOOLEAN is_admin "NOT NULL, DEFAULT FALSE"
+        TIMESTAMP created_at
+        TIMESTAMP updated_at
+    }
+
+    user_profiles {
+        BIGINT user_id PK, FK "to users.id"
+        VARCHAR phone_number
+        VARCHAR address_line1
+        VARCHAR city
+        VARCHAR country
+    }
+
+    orders {
+        BIGINT id PK "AUTO_INCREMENT"
+        BIGINT user_id FK "to users.id"
+        VARCHAR order_number "NOT NULL, UNIQUE"
+        DECIMAL total_amount "NOT NULL"
+        ENUM status "pending, paid, etc."
+        TIMESTAMP ordered_at
+    }
+
+    order_items {
+        BIGINT id PK "AUTO_INCREMENT"
+        BIGINT order_id FK "to orders.id"
+        BIGINT product_id FK "to products.id"
+        INT quantity "NOT NULL"
+        DECIMAL price_at_purchase "NOT NULL"
+    }
+
+    products {
+        BIGINT id PK "AUTO_INCREMENT"
+        BIGINT category_id FK "to categories.id"
+        VARCHAR name "NOT NULL"
+        VARCHAR slug "NOT NULL, UNIQUE"
+        DECIMAL price "NOT NULL"
+        INT stock_quantity "NOT NULL"
+    }
+
+    product_images {
+        BIGINT id PK "AUTO_INCREMENT"
+        BIGINT product_id FK "to products.id"
+        VARCHAR image_url "NOT NULL"
+        BOOLEAN is_primary "DEFAULT FALSE"
+    }
+
+    categories {
+        BIGINT id PK "AUTO_INCREMENT"
+        BIGINT parent_id FK "to categories.id (self-ref)"
+        VARCHAR name "NOT NULL"
+        VARCHAR slug "NOT NULL, UNIQUE"
+    }
+
+    product_tag {
+        BIGINT product_id PK, FK "to products.id"
+        BIGINT tag_id PK, FK "to tags.id"
+    }
+
+    tags {
+        BIGINT id PK "AUTO_INCREMENT"
+        VARCHAR name "NOT NULL, UNIQUE"
+        VARCHAR slug "NOT NULL, UNIQUE"
+    }
+
+    carts {
+        BIGINT id PK "AUTO_INCREMENT"
+        BIGINT user_id FK, UK "to users.id (nullable)"
+        VARCHAR session_id UK "for guest carts"
+    }
+
+    cart_items {
+        BIGINT id PK "AUTO_INCREMENT"
+        BIGINT cart_id FK "to carts.id"
+        BIGINT product_id FK "to products.id"
+        INT quantity "NOT NULL"
+    }
+
+    %% --- Relationships ---
+    users ||--o| user_profiles : "has one profile"
+    users ||--o{ orders : "places"
+    users ||--o| carts : "has one cart"
+
+    orders ||--o{ order_items : "contains"
+    products ||--o{ order_items : "is in"
+
+    categories ||--o{ products : "contains"
+    categories }o--o| categories : "is subcategory of"
+
+    products ||--o{ product_images : "has multiple"
+    products }o--o{ product_tag : "is tagged with"
+    tags ||--o{ product_tag : "tags"
+
+    carts ||--o{ cart_items : "contains"
+    products ||--o{ cart_items : "is in"
