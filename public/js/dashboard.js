@@ -59,8 +59,48 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
     // Handle sidebar toggle on mobile
-    document.getElementById('sidebarToggle').addEventListener('click', function() {
-        document.querySelector('.sidebar').classList.toggle('show');
+    const sidebar = document.getElementById('sidebar');
+    const sidebarOverlay = document.getElementById('sidebarOverlay');
+    const sidebarToggle = document.getElementById('sidebarToggle');
+    const sidebarClose = document.getElementById('sidebarClose');
+
+    function toggleSidebar() {
+        sidebar.classList.toggle('show');
+        sidebarOverlay.classList.toggle('show');
+        document.body.style.overflow = sidebar.classList.contains('show') ? 'hidden' : '';
+    }
+
+    function closeSidebar() {
+        sidebar.classList.remove('show');
+        sidebarOverlay.classList.remove('show');
+        document.body.style.overflow = '';
+    }
+
+    sidebarToggle.addEventListener('click', toggleSidebar);
+    
+    if (sidebarClose) {
+        sidebarClose.addEventListener('click', closeSidebar);
+    }
+    
+    if (sidebarOverlay) {
+        sidebarOverlay.addEventListener('click', closeSidebar);
+    }
+
+    // Close sidebar when clicking on sidebar links on mobile
+    const sidebarLinks = document.querySelectorAll('.sidebar .nav-link');
+    sidebarLinks.forEach(link => {
+        link.addEventListener('click', () => {
+            if (window.innerWidth < 768) {
+                closeSidebar();
+            }
+        });
+    });
+
+    // Handle window resize
+    window.addEventListener('resize', () => {
+        if (window.innerWidth >= 768) {
+            closeSidebar();
+        }
     });
 
     // Fetch user data
@@ -114,8 +154,8 @@ document.addEventListener('DOMContentLoaded', function() {
             // Show profile section
             profileInfo.style.display = 'block';
         }
-        
-        // You can also fetch other user-specific data here like orders, cart items, etc.
+          // You can also fetch other user-specific data here like orders, cart items, etc.
+        loadDashboardStats();
     })
     .catch(error => {
         console.error('Error fetching user data:', error);
@@ -127,5 +167,50 @@ document.addEventListener('DOMContentLoaded', function() {
             localStorage.removeItem('auth_token');
             window.location.href = 'login.html';
         }
+        
+        // Load stats even if user data fails
+        loadDashboardStats();
     });
+
+    // Function to load dashboard statistics
+    function loadDashboardStats() {
+        // Load cart items count
+        const cart = JSON.parse(localStorage.getItem('cart') || '[]');
+        const cartItemsCount = cart.reduce((total, item) => total + (item.quantity || 1), 0);
+        document.getElementById('cartItems').textContent = cartItemsCount;
+
+        // Load orders count from demo orders or API
+        const demoMode = localStorage.getItem('demo_mode') === 'true';
+        
+        if (demoMode) {
+            const demoOrders = JSON.parse(localStorage.getItem('demo_orders') || '[]');
+            document.getElementById('ordersCount').textContent = demoOrders.length;
+        } else {
+            // Try to fetch orders from API
+            fetch('/api/orders', {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.data && Array.isArray(data.data)) {
+                    document.getElementById('ordersCount').textContent = data.data.length;
+                }
+            })
+            .catch(error => {
+                console.error('Error fetching orders:', error);
+                // Fallback to demo orders if API fails
+                const demoOrders = JSON.parse(localStorage.getItem('demo_orders') || '[]');
+                document.getElementById('ordersCount').textContent = demoOrders.length;
+            });
+        }
+
+        // Load wishlist items (placeholder - implement if you have wishlist feature)
+        const wishlist = JSON.parse(localStorage.getItem('wishlist') || '[]');
+        document.getElementById('wishlistItems').textContent = wishlist.length;
+    }
 });
